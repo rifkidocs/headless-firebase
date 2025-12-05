@@ -4,12 +4,14 @@ import { useState } from "react";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
-import { LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus, Eye, EyeOff } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -53,66 +55,125 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <div className="flex justify-center mb-6">
-          <div className="p-3 bg-blue-100 rounded-full">
-            {isLogin ? <LogIn className="w-8 h-8 text-blue-600" /> : <UserPlus className="w-8 h-8 text-blue-600" />}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100"
+      >
+        <div className="flex justify-center mb-8">
+          <div className="p-4 bg-blue-50 rounded-2xl">
+            <AnimatePresence mode="wait">
+              {isLogin ? (
+                <motion.div
+                  key="login-icon"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                >
+                  <LogIn className="w-8 h-8 text-blue-600" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="register-icon"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                >
+                  <UserPlus className="w-8 h-8 text-blue-600" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-center text-gray-800 mb-2">
-          {isLogin ? "Admin Login" : "Create Account"}
-        </h1>
-        <p className="text-center text-gray-500 text-sm mb-6">
-          {isLogin ? "Welcome back! Please login to your account." : "Get started with your new admin account."}
-        </p>
         
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">
-            {error}
-          </div>
-        )}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">
+            {isLogin ? "Welcome Back" : "Create Account"}
+          </h1>
+          <p className="text-gray-500 text-sm">
+            {isLogin ? "Please sign in to continue to Admin" : "Get started with your new admin account"}
+          </p>
+        </div>
+        
+        <AnimatePresence>
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2"
+            >
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-400"
-              placeholder="admin@example.com"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 placeholder:text-gray-400 transition-all bg-gray-50/50 focus:bg-white"
+              placeholder="name@company.com"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-400"
-              placeholder="••••••••"
-              required
-              minLength={6}
-            />
-            {!isLogin && (
-              <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters long</p>
-            )}
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 placeholder:text-gray-400 transition-all bg-gray-50/50 focus:bg-white pr-12"
+                placeholder="••••••••"
+                required
+                minLength={6}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-md transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            <AnimatePresence>
+              {!isLogin && (
+                <motion.p 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-xs text-gray-500 mt-2 flex items-center gap-1"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Must be at least 6 characters long
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
+          
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 font-medium"
+            className="w-full bg-blue-600 text-white py-3.5 px-4 rounded-xl hover:bg-blue-700 transition-all disabled:bg-blue-400 font-semibold shadow-lg shadow-blue-600/20 active:scale-[0.98]"
           >
             {loading 
-              ? (isLogin ? "Logging in..." : "Creating account...") 
-              : (isLogin ? "Login" : "Register")
+              ? (isLogin ? "Signing in..." : "Creating account...") 
+              : (isLogin ? "Sign In" : "Create Account")
             }
           </button>
         </form>
 
-        <div className="mt-4 text-center">
+        <div className="mt-6 text-center">
           <button
             onClick={() => {
               setIsLogin(!isLogin);
@@ -120,22 +181,26 @@ export default function LoginPage() {
               setEmail("");
               setPassword("");
             }}
-            className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
+            className="text-sm text-gray-600 hover:text-blue-600 font-medium transition-colors"
           >
-            {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
+            {isLogin ? (
+              <>Don't have an account? <span className="text-blue-600 underline decoration-blue-600/30 hover:decoration-blue-600">Register now</span></>
+            ) : (
+              <>Already have an account? <span className="text-blue-600 underline decoration-blue-600/30 hover:decoration-blue-600">Login here</span></>
+            )}
           </button>
         </div>
 
-        <div className="mt-6 flex items-center justify-center">
-            <div className="border-t border-gray-300 w-full"></div>
-            <span className="px-3 text-gray-500 bg-white text-xs font-medium uppercase">Or continue with</span>
-            <div className="border-t border-gray-300 w-full"></div>
+        <div className="mt-8 mb-6 flex items-center justify-center">
+            <div className="border-t border-gray-200 w-full"></div>
+            <span className="px-4 text-gray-400 bg-white text-xs font-medium uppercase tracking-wider whitespace-nowrap">Or continue with</span>
+            <div className="border-t border-gray-200 w-full"></div>
         </div>
 
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="mt-6 w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-50 transition-colors disabled:bg-gray-100 flex items-center justify-center gap-2"
+          className="w-full bg-white border border-gray-200 text-gray-700 py-3 px-4 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all disabled:bg-gray-50 flex items-center justify-center gap-3 font-medium"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -155,9 +220,9 @@ export default function LoginPage() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Sign in with Google
+          Google Account
         </button>
-      </div>
+      </motion.div>
     </div>
   );
 }
