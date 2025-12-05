@@ -1,29 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
-import { LogIn } from "lucide-react";
+import { LogIn, UserPlus } from "lucide-react";
 
 export default function LoginPage() {
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
       router.push("/admin");
     } catch (err: unknown) {
       console.error(err);
-      setError("Failed to login. Please check your credentials.");
+      const errorMessage = isLogin 
+        ? "Failed to login. Please check your credentials." 
+        : "Failed to register. Email might be already in use.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -49,18 +57,23 @@ export default function LoginPage() {
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <div className="flex justify-center mb-6">
           <div className="p-3 bg-blue-100 rounded-full">
-            <LogIn className="w-8 h-8 text-blue-600" />
+            {isLogin ? <LogIn className="w-8 h-8 text-blue-600" /> : <UserPlus className="w-8 h-8 text-blue-600" />}
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">Admin Login</h1>
+        <h1 className="text-2xl font-bold text-center text-gray-800 mb-2">
+          {isLogin ? "Admin Login" : "Create Account"}
+        </h1>
+        <p className="text-center text-gray-500 text-sm mb-6">
+          {isLogin ? "Welcome back! Please login to your account." : "Get started with your new admin account."}
+        </p>
         
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
@@ -81,20 +94,41 @@ export default function LoginPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-400"
               placeholder="••••••••"
               required
+              minLength={6}
             />
+            {!isLogin && (
+              <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters long</p>
+            )}
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 font-medium"
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading 
+              ? (isLogin ? "Logging in..." : "Creating account...") 
+              : (isLogin ? "Login" : "Register")
+            }
           </button>
         </form>
 
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError("");
+              setEmail("");
+              setPassword("");
+            }}
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
+          >
+            {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
+          </button>
+        </div>
+
         <div className="mt-6 flex items-center justify-center">
             <div className="border-t border-gray-300 w-full"></div>
-            <span className="px-3 text-gray-500 bg-white text-sm">OR</span>
+            <span className="px-3 text-gray-500 bg-white text-xs font-medium uppercase">Or continue with</span>
             <div className="border-t border-gray-300 w-full"></div>
         </div>
 
