@@ -3,56 +3,177 @@
 import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { useForm, useFieldArray } from "react-hook-form";
-import { ArrowLeft, Save, Plus, Trash2, Loader2, GripVertical } from "lucide-react";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+} from "firebase/firestore";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
+import {
+  ArrowLeft,
+  Save,
+  Plus,
+  Trash2,
+  Loader2,
+  GripVertical,
+  ChevronDown,
+  Type,
+  AlignLeft,
+  FileText,
+  Hash,
+  Percent,
+  ToggleLeft,
+  Calendar,
+  Clock,
+  Clock3,
+  Mail,
+  Lock,
+  Fingerprint,
+  Braces,
+  List,
+  Image,
+  Link2,
+  Component,
+  Layers,
+  Settings2,
+} from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
+import { toast } from "@/components/ui/Toast";
+import {
+  FieldType,
+  FIELD_TYPE_CONFIG,
+  Field,
+  ComponentDefinition,
+} from "@/lib/types";
 
-// Define types
-type FieldType = "text" | "textarea" | "boolean" | "number" | "date";
-
-interface Field {
-  name: string;
-  label: string;
-  type: FieldType;
-  required: boolean;
-}
+const FIELD_ICONS: Record<FieldType, React.ElementType> = {
+  text: Type,
+  textarea: AlignLeft,
+  richtext: FileText,
+  number: Hash,
+  decimal: Percent,
+  boolean: ToggleLeft,
+  date: Calendar,
+  datetime: Clock,
+  time: Clock3,
+  email: Mail,
+  password: Lock,
+  uid: Fingerprint,
+  json: Braces,
+  enumeration: List,
+  media: Image,
+  relation: Link2,
+  component: Component,
+  dynamiczone: Layers,
+};
 
 interface SchemaForm {
   label: string;
   slug: string;
+  kind: "collectionType" | "singleType";
+  draftAndPublish: boolean;
   fields: Field[];
 }
 
-export default function SchemaEditorPage({ params }: { params: Promise<{ id: string }> }) {
+interface CollectionOption {
+  slug: string;
+  label: string;
+}
+
+export default function SchemaEditorPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const isNew = id === "new";
   const router = useRouter();
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [manuallyEditedKeys, setManuallyEditedKeys] = useState<
+    Record<string, boolean>
+  >({});
+  const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [collections, setCollections] = useState<CollectionOption[]>([]);
+  const [components, setComponents] = useState<ComponentDefinition[]>([]);
+  const [showFieldPicker, setShowFieldPicker] = useState(false);
 
-  const { register, control, handleSubmit, setValue, watch, formState: { errors } } = useForm<SchemaForm>({
+  const {
+    register,
+    control,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<SchemaForm>({
     defaultValues: {
       label: "",
       slug: "",
-      fields: [{ name: "title", label: "Title", type: "text", required: true }]
-    }
+      kind: "collectionType",
+      draftAndPublish: false,
+      fields: [],
+    },
   });
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "fields"
+    name: "fields",
   });
+
+  // Fetch collections for relation fields
+  useEffect(() => {
+    const q = query(collection(db, "_collections"), orderBy("label"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const cols = snapshot.docs.map((doc) => ({
+        slug: doc.id,
+        label: doc.data().label,
+      }));
+      setCollections(cols);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch components for component fields
+  useEffect(() => {
+    const q = query(collection(db, "_components"), orderBy("displayName"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const comps = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as ComponentDefinition[];
+      setComponents(comps);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Auto-generate slug from label if new
   const labelValue = watch("label");
   useEffect(() => {
     if (isNew && labelValue) {
-      const slug = labelValue.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const slug = labelValue
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
       setValue("slug", slug);
     }
   }, [labelValue, isNew, setValue]);
+
+  // Helper to generate camelCase key from label
+  const generateKey = (label: string) => {
+    return label
+      .toLowerCase()
+      .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .replace(/^(.)/, (c) => c.toLowerCase());
+  };
 
   useEffect(() => {
     if (isNew) return;
@@ -65,10 +186,13 @@ export default function SchemaEditorPage({ params }: { params: Promise<{ id: str
           const data = docSnap.data() as SchemaForm;
           setValue("label", data.label);
           setValue("slug", data.slug);
-          setValue("fields", data.fields);
+          setValue("kind", data.kind || "collectionType");
+          setValue("draftAndPublish", data.draftAndPublish || false);
+          setValue("fields", data.fields || []);
         }
       } catch (error) {
         console.error("Error fetching schema:", error);
+        toast.error("Failed to load schema");
       } finally {
         setLoading(false);
       }
@@ -80,59 +204,152 @@ export default function SchemaEditorPage({ params }: { params: Promise<{ id: str
   const onSubmit = async (data: SchemaForm) => {
     setSaving(true);
     try {
-      // If new, use the generated slug as ID
       const docId = isNew ? data.slug : id;
-      
+
       await setDoc(doc(db, "_collections", docId), {
         ...data,
         updatedAt: serverTimestamp(),
+        ...(isNew && { createdAt: serverTimestamp() }),
       });
-      
+
+      toast.success(isNew ? "Content type created!" : "Content type updated!");
       router.push("/admin/schema");
     } catch (error) {
       console.error("Error saving schema:", error);
-      alert("Failed to save schema");
+      toast.error("Failed to save schema");
     } finally {
       setSaving(false);
     }
   };
 
+  const addField = (type: FieldType) => {
+    const newField: Field = {
+      name: "",
+      label: "",
+      type,
+      required: false,
+    };
+
+    // Add type-specific defaults
+    if (type === "enumeration") {
+      newField.enumOptions = [{ label: "Option 1", value: "option1" }];
+    } else if (type === "relation") {
+      newField.relation = {
+        type: "hasOne",
+        target: collections[0]?.slug || "",
+      };
+    } else if (type === "component") {
+      newField.component = {
+        component: components[0]?.id || "",
+        repeatable: false,
+      };
+    } else if (type === "dynamiczone") {
+      newField.dynamiczone = {
+        components: [],
+      };
+    }
+
+    append(newField);
+    setShowFieldPicker(false);
+
+    // Auto-expand new field
+    setTimeout(() => {
+      setExpandedFields((prev) => ({
+        ...prev,
+        [fields.length.toString()]: true,
+      }));
+    }, 0);
+  };
+
+  const toggleFieldExpand = (index: string) => {
+    setExpandedFields((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
+
   if (loading) {
-    return <div className="flex justify-center p-8 h-96 items-center"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>;
+    return (
+      <div className='flex justify-center p-8 h-96 items-center'>
+        <Loader2 className='w-8 h-8 animate-spin text-blue-600' />
+      </div>
+    );
   }
 
+  const fieldCategories = [
+    {
+      name: "Text",
+      types: [
+        "text",
+        "textarea",
+        "richtext",
+        "email",
+        "password",
+        "uid",
+      ] as FieldType[],
+    },
+    {
+      name: "Number",
+      types: ["number", "decimal"] as FieldType[],
+    },
+    {
+      name: "Date & Time",
+      types: ["date", "datetime", "time"] as FieldType[],
+    },
+    {
+      name: "Other",
+      types: ["boolean", "enumeration", "json", "media"] as FieldType[],
+    },
+    {
+      name: "Relation",
+      types: ["relation", "component", "dynamiczone"] as FieldType[],
+    },
+  ];
+
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/admin/schema" className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors">
-          <ArrowLeft className="w-5 h-5" />
+    <div className='max-w-5xl mx-auto'>
+      <div className='flex items-center gap-4 mb-8'>
+        <Link
+          href='/admin/schema'
+          className='p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors'>
+          <ArrowLeft className='w-5 h-5' />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          <h1 className='text-2xl font-bold text-gray-900 tracking-tight'>
             {isNew ? "Create Content Type" : "Edit Content Type"}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Define the structure for your content.</p>
+          <p className='text-sm text-gray-500 mt-1'>
+            Define the structure for your content.
+          </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className='space-y-8'>
         {/* Basic Info */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-6 border-b border-gray-200 bg-gray-50/50">
-            <h2 className="text-base font-semibold text-gray-900">Basic Information</h2>
+        <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
+          <div className='p-6 border-b border-gray-200 bg-gray-50/50'>
+            <h2 className='text-base font-semibold text-gray-900'>
+              Basic Information
+            </h2>
           </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className='p-6 grid grid-cols-1 md:grid-cols-2 gap-6'>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Display Name</label>
+              <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                Display Name
+              </label>
               <input
                 {...register("label", { required: true })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 placeholder:text-gray-400"
-                placeholder="e.g. Blog Posts"
+                className='w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 placeholder:text-gray-400'
+                placeholder='e.g. Blog Posts'
               />
-              {errors.label && <p className="text-red-500 text-xs mt-1.5">Label is required</p>}
+              {errors.label && (
+                <p className='text-red-500 text-xs mt-1.5'>Label is required</p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Collection Slug (ID)</label>
+              <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                API ID (Slug)
+              </label>
               <input
                 {...register("slug", { required: true })}
                 readOnly={!isNew}
@@ -140,131 +357,552 @@ export default function SchemaEditorPage({ params }: { params: Promise<{ id: str
                   "w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 placeholder:text-gray-400",
                   !isNew && "bg-gray-100 text-gray-500 cursor-not-allowed"
                 )}
-                placeholder="e.g. blog-posts"
+                placeholder='e.g. blog-posts'
               />
+            </div>
+            <div>
+              <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                Content Type
+              </label>
+              <Controller
+                name='kind'
+                control={control}
+                render={({ field }) => (
+                  <div className='flex gap-4'>
+                    <label className='flex items-center gap-2 cursor-pointer'>
+                      <input
+                        type='radio'
+                        {...field}
+                        value='collectionType'
+                        checked={field.value === "collectionType"}
+                        className='w-4 h-4 text-blue-600'
+                      />
+                      <span className='text-sm text-gray-700'>
+                        Collection Type
+                      </span>
+                    </label>
+                    <label className='flex items-center gap-2 cursor-pointer'>
+                      <input
+                        type='radio'
+                        {...field}
+                        value='singleType'
+                        checked={field.value === "singleType"}
+                        className='w-4 h-4 text-blue-600'
+                      />
+                      <span className='text-sm text-gray-700'>Single Type</span>
+                    </label>
+                  </div>
+                )}
+              />
+              <p className='text-xs text-gray-500 mt-1.5'>
+                {watch("kind") === "collectionType"
+                  ? "Multiple entries (e.g., Blog Posts, Products)"
+                  : "Single entry (e.g., Homepage, Settings)"}
+              </p>
+            </div>
+            <div className='flex items-center'>
+              <label className='flex items-center gap-3 cursor-pointer'>
+                <input
+                  type='checkbox'
+                  {...register("draftAndPublish")}
+                  className='w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500'
+                />
+                <div>
+                  <span className='text-sm font-medium text-gray-700'>
+                    Enable Draft/Publish
+                  </span>
+                  <p className='text-xs text-gray-500'>
+                    Content must be published to appear in API
+                  </p>
+                </div>
+              </label>
             </div>
           </div>
         </div>
 
         {/* Fields Builder */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-           <div className="p-6 border-b border-gray-200 bg-gray-50/50 flex justify-between items-center">
+        <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
+          <div className='p-6 border-b border-gray-200 bg-gray-50/50 flex justify-between items-center'>
             <div>
-              <h2 className="text-base font-semibold text-gray-900">Fields Structure</h2>
-              <p className="text-sm text-gray-500 mt-0.5">Add and configure fields for your content type.</p>
+              <h2 className='text-base font-semibold text-gray-900'>
+                Fields Structure
+              </h2>
+              <p className='text-sm text-gray-500 mt-0.5'>
+                Add and configure fields for your content type.
+              </p>
             </div>
-            <button
-              type="button"
-              onClick={() => append({ name: "", label: "", type: "text", required: false })}
-              className="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
-            >
-              <Plus className="w-4 h-4" /> Add Field
-            </button>
+            <div className='relative'>
+              <button
+                type='button'
+                onClick={() => setShowFieldPicker(!showFieldPicker)}
+                className='inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm'>
+                <Plus className='w-4 h-4' /> Add Field
+                <ChevronDown
+                  className={clsx(
+                    "w-4 h-4 transition-transform",
+                    showFieldPicker && "rotate-180"
+                  )}
+                />
+              </button>
+
+              {/* Field Type Picker */}
+              {showFieldPicker && (
+                <div className='absolute right-0 mt-2 w-[500px] bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden'>
+                  <div className='p-4 border-b border-gray-200 bg-gray-50'>
+                    <h3 className='font-semibold text-gray-900'>
+                      Select Field Type
+                    </h3>
+                  </div>
+                  <div className='p-4 max-h-[400px] overflow-y-auto'>
+                    {fieldCategories.map((category) => (
+                      <div key={category.name} className='mb-4 last:mb-0'>
+                        <p className='text-xs font-bold text-gray-500 uppercase tracking-wider mb-2'>
+                          {category.name}
+                        </p>
+                        <div className='grid grid-cols-2 gap-2'>
+                          {category.types.map((type) => {
+                            const config = FIELD_TYPE_CONFIG[type];
+                            const Icon = FIELD_ICONS[type];
+                            return (
+                              <button
+                                key={type}
+                                type='button'
+                                onClick={() => addField(type)}
+                                className='flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-left group'>
+                                <div className='p-2 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors'>
+                                  <Icon className='w-4 h-4 text-gray-600 group-hover:text-blue-600' />
+                                </div>
+                                <div className='flex-1 min-w-0'>
+                                  <p className='text-sm font-medium text-gray-900'>
+                                    {config.label}
+                                  </p>
+                                  <p className='text-xs text-gray-500 truncate'>
+                                    {config.description}
+                                  </p>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="p-6 space-y-4">
-            {fields.map((field, index) => (
-              <div key={field.id} className="group relative bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all">
-                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gray-200 rounded-l-lg group-hover:bg-blue-500 transition-colors"></div>
-                 
-                 <div className="flex gap-4 items-start pl-3">
-                    <div className="mt-3 text-gray-400 cursor-grab active:cursor-grabbing">
-                        <GripVertical className="w-5 h-5" />
-                    </div>
-                    
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4">
-                        <div className="md:col-span-4">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Label</label>
-                            <input
-                            {...register(`fields.${index}.label` as const, { required: true })}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-400"
-                            placeholder="e.g. Article Title"
-                            />
-                        </div>
-                        <div className="md:col-span-3">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Field Key</label>
-                            <input
-                            {...register(`fields.${index}.name` as const, { required: true })}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-mono text-gray-900 placeholder:text-gray-400"
-                            placeholder="camelCase"
-                            />
-                        </div>
-                        <div className="md:col-span-3">
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Data Type</label>
-                            <div className="relative">
-                                <select
-                                {...register(`fields.${index}.type` as const)}
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none appearance-none bg-white text-gray-900"
-                                >
-                                <option value="text">Short Text</option>
-                                <option value="textarea">Long Text</option>
-                                <option value="number">Number</option>
-                                <option value="boolean">Boolean (Switch)</option>
-                                <option value="date">Date Picker</option>
-                                </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="md:col-span-2 flex items-center h-full pt-6">
-                            <label className="flex items-center gap-2 cursor-pointer select-none">
-                            <input
-                                type="checkbox"
-                                {...register(`fields.${index}.required` as const)}
-                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                            />
-                            <span className="text-sm font-medium text-gray-600">Required</span>
-                            </label>
-                        </div>
-                    </div>
+          <div className='p-6 space-y-3'>
+            {fields.map((field, index) => {
+              const Icon = FIELD_ICONS[field.type as FieldType] || Settings2;
+              const config = FIELD_TYPE_CONFIG[field.type as FieldType];
+              const isExpanded = expandedFields[index.toString()];
 
+              return (
+                <div
+                  key={field.id}
+                  className='group relative bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all overflow-hidden'>
+                  {/* Field Header */}
+                  <div
+                    className='flex items-center gap-3 p-4 cursor-pointer'
+                    onClick={() => toggleFieldExpand(index.toString())}>
+                    <div className='text-gray-400 cursor-grab active:cursor-grabbing'>
+                      <GripVertical className='w-5 h-5' />
+                    </div>
+                    <div className='p-2 rounded-lg bg-gray-100'>
+                      <Icon className='w-4 h-4 text-gray-600' />
+                    </div>
+                    <div className='flex-1 min-w-0'>
+                      <div className='flex items-center gap-2'>
+                        <span className='font-medium text-gray-900'>
+                          {watch(`fields.${index}.label`) || "Untitled Field"}
+                        </span>
+                        {watch(`fields.${index}.required`) && (
+                          <span className='text-xs text-red-500'>*</span>
+                        )}
+                      </div>
+                      <p className='text-xs text-gray-500'>
+                        {config?.label || field.type} •{" "}
+                        {watch(`fields.${index}.name`) || "no-key"}
+                      </p>
+                    </div>
                     <button
-                    type="button"
-                    onClick={() => remove(index)}
-                    className="mt-1 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Remove field"
-                    >
-                    <Trash2 className="w-5 h-5" />
+                      type='button'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        remove(index);
+                      }}
+                      className='p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100'>
+                      <Trash2 className='w-4 h-4' />
                     </button>
-                 </div>
-              </div>
-            ))}
+                    <ChevronDown
+                      className={clsx(
+                        "w-5 h-5 text-gray-400 transition-transform",
+                        isExpanded && "rotate-180"
+                      )}
+                    />
+                  </div>
+
+                  {/* Field Settings */}
+                  {isExpanded && (
+                    <div className='border-t border-gray-200 p-4 bg-gray-50/50 space-y-4'>
+                      <div className='grid grid-cols-2 gap-4'>
+                        <div>
+                          <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                            Label
+                          </label>
+                          <input
+                            {...register(`fields.${index}.label` as const, {
+                              required: true,
+                              onChange: (e) => {
+                                if (!manuallyEditedKeys[field.id]) {
+                                  setValue(
+                                    `fields.${index}.name`,
+                                    generateKey(e.target.value)
+                                  );
+                                }
+                              },
+                            })}
+                            className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-400'
+                            placeholder='e.g. Article Title'
+                          />
+                        </div>
+                        <div>
+                          <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                            Field Key
+                          </label>
+                          <input
+                            {...register(`fields.${index}.name` as const, {
+                              required: true,
+                              onChange: () => {
+                                setManuallyEditedKeys((prev) => ({
+                                  ...prev,
+                                  [field.id]: true,
+                                }));
+                              },
+                            })}
+                            className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-mono text-gray-900 placeholder:text-gray-400'
+                            placeholder='camelCase'
+                          />
+                        </div>
+                      </div>
+
+                      {/* Options row */}
+                      <div className='flex flex-wrap gap-4'>
+                        <label className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            {...register(`fields.${index}.required` as const)}
+                            className='w-4 h-4 text-blue-600 rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>
+                            Required
+                          </span>
+                        </label>
+                        <label className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            {...register(`fields.${index}.unique` as const)}
+                            className='w-4 h-4 text-blue-600 rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>Unique</span>
+                        </label>
+                        <label className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            {...register(`fields.${index}.private` as const)}
+                            className='w-4 h-4 text-blue-600 rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>
+                            Private (hide in API)
+                          </span>
+                        </label>
+                      </div>
+
+                      {/* Type-specific settings */}
+                      {(field.type === "text" || field.type === "textarea") && (
+                        <div className='grid grid-cols-2 gap-4'>
+                          <div>
+                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                              Min Length
+                            </label>
+                            <input
+                              type='number'
+                              {...register(
+                                `fields.${index}.minLength` as const,
+                                { valueAsNumber: true }
+                              )}
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'
+                              placeholder='0'
+                            />
+                          </div>
+                          <div>
+                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                              Max Length
+                            </label>
+                            <input
+                              type='number'
+                              {...register(
+                                `fields.${index}.maxLength` as const,
+                                { valueAsNumber: true }
+                              )}
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'
+                              placeholder='Unlimited'
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {(field.type === "number" ||
+                        field.type === "decimal") && (
+                        <div className='grid grid-cols-2 gap-4'>
+                          <div>
+                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                              Minimum
+                            </label>
+                            <input
+                              type='number'
+                              {...register(`fields.${index}.min` as const, {
+                                valueAsNumber: true,
+                              })}
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'
+                            />
+                          </div>
+                          <div>
+                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                              Maximum
+                            </label>
+                            <input
+                              type='number'
+                              {...register(`fields.${index}.max` as const, {
+                                valueAsNumber: true,
+                              })}
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {field.type === "enumeration" && (
+                        <div>
+                          <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2'>
+                            Options
+                          </label>
+                          <Controller
+                            name={`fields.${index}.enumOptions`}
+                            control={control}
+                            render={({ field: enumField }) => (
+                              <div className='space-y-2'>
+                                {(enumField.value || []).map(
+                                  (option, optIndex) => (
+                                    <div key={optIndex} className='flex gap-2'>
+                                      <input
+                                        value={option.label}
+                                        onChange={(e) => {
+                                          const newOptions = [
+                                            ...(enumField.value || []),
+                                          ];
+                                          newOptions[optIndex] = {
+                                            ...newOptions[optIndex],
+                                            label: e.target.value,
+                                            value: e.target.value
+                                              .toLowerCase()
+                                              .replace(/\s+/g, "_"),
+                                          };
+                                          enumField.onChange(newOptions);
+                                        }}
+                                        className='flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md'
+                                        placeholder='Option label'
+                                      />
+                                      <button
+                                        type='button'
+                                        onClick={() => {
+                                          const newOptions = (
+                                            enumField.value || []
+                                          ).filter((_, i) => i !== optIndex);
+                                          enumField.onChange(newOptions);
+                                        }}
+                                        className='p-2 text-gray-400 hover:text-red-500'>
+                                        <Trash2 className='w-4 h-4' />
+                                      </button>
+                                    </div>
+                                  )
+                                )}
+                                <button
+                                  type='button'
+                                  onClick={() => {
+                                    enumField.onChange([
+                                      ...(enumField.value || []),
+                                      { label: "", value: "" },
+                                    ]);
+                                  }}
+                                  className='text-sm text-blue-600 hover:text-blue-700 font-medium'>
+                                  + Add option
+                                </button>
+                              </div>
+                            )}
+                          />
+                        </div>
+                      )}
+
+                      {field.type === "relation" && (
+                        <div className='grid grid-cols-2 gap-4'>
+                          <div>
+                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                              Relation Type
+                            </label>
+                            <select
+                              {...register(
+                                `fields.${index}.relation.type` as const
+                              )}
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'>
+                              <option value='hasOne'>Has One</option>
+                              <option value='hasMany'>Has Many</option>
+                              <option value='belongsTo'>Belongs To</option>
+                              <option value='manyToMany'>Many to Many</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                              Related To
+                            </label>
+                            <select
+                              {...register(
+                                `fields.${index}.relation.target` as const
+                              )}
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'>
+                              {collections.map((col) => (
+                                <option key={col.slug} value={col.slug}>
+                                  {col.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+
+                      {field.type === "component" && (
+                        <div className='grid grid-cols-2 gap-4'>
+                          <div>
+                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                              Component
+                            </label>
+                            <select
+                              {...register(
+                                `fields.${index}.component.component` as const
+                              )}
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'>
+                              {components.map((comp) => (
+                                <option key={comp.id} value={comp.id}>
+                                  {comp.displayName}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className='flex items-center pt-6'>
+                            <label className='flex items-center gap-2 cursor-pointer'>
+                              <input
+                                type='checkbox'
+                                {...register(
+                                  `fields.${index}.component.repeatable` as const
+                                )}
+                                className='w-4 h-4 text-blue-600 rounded border-gray-300'
+                              />
+                              <span className='text-sm text-gray-700'>
+                                Repeatable
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      )}
+
+                      {field.type === "uid" && (
+                        <div>
+                          <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                            Generate from field
+                          </label>
+                          <select
+                            {...register(
+                              `fields.${index}.targetField` as const
+                            )}
+                            className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'>
+                            <option value=''>Select a field</option>
+                            {fields
+                              .filter((f) => f.type === "text" && f.name)
+                              .map((f) => (
+                                <option key={f.name} value={f.name}>
+                                  {f.label || f.name}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                      )}
+
+                      <div>
+                        <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                          Description (optional)
+                        </label>
+                        <input
+                          {...register(`fields.${index}.description` as const)}
+                          className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'
+                          placeholder='Help text for this field'
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
             {fields.length === 0 && (
-                <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">
-                    <p className="text-gray-500 text-sm">No fields added yet. Click &quot;Add Field&quot; to start.</p>
-                </div>
+              <div className='text-center py-12 border-2 border-dashed border-gray-200 rounded-lg'>
+                <Settings2 className='w-12 h-12 mx-auto mb-3 text-gray-300' />
+                <p className='text-gray-500 text-sm mb-2'>
+                  No fields added yet.
+                </p>
+                <button
+                  type='button'
+                  onClick={() => setShowFieldPicker(true)}
+                  className='text-blue-600 hover:text-blue-700 text-sm font-medium'>
+                  Click &quot;Add Field&quot; to start
+                </button>
+              </div>
             )}
           </div>
         </div>
 
-        <div className="flex justify-end pt-4 pb-20">
+        <div className='flex justify-end pt-4 pb-20'>
           <Link
-             href="/admin/schema"
-             className="px-6 py-2.5 mr-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all"
-          >
-             Cancel
+            href='/admin/schema'
+            className='px-6 py-2.5 mr-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all'>
+            Cancel
           </Link>
           <button
-            type="submit"
+            type='submit'
             disabled={saving}
-            className="bg-blue-600 text-white px-8 py-2.5 rounded-lg font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/20 transition-all flex items-center gap-2 disabled:bg-blue-400 disabled:cursor-not-allowed shadow-lg shadow-blue-600/20"
-          >
+            className='bg-blue-600 text-white px-8 py-2.5 rounded-lg font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/20 transition-all flex items-center gap-2 disabled:bg-blue-400 disabled:cursor-not-allowed shadow-lg shadow-blue-600/20'>
             {saving ? (
-                <>
-                 <Loader2 className="w-4 h-4 animate-spin" />
-                 Saving Content Type...
-                </>
+              <>
+                <Loader2 className='w-4 h-4 animate-spin' />
+                Saving...
+              </>
             ) : (
-                <>
-                 <Save className="w-4 h-4" />
-                 Save Content Type
-                </>
+              <>
+                <Save className='w-4 h-4' />
+                Save Content Type
+              </>
             )}
           </button>
         </div>
       </form>
+
+      {/* Click outside to close field picker */}
+      {showFieldPicker && (
+        <div
+          className='fixed inset-0 z-40'
+          onClick={() => setShowFieldPicker(false)}
+        />
+      )}
     </div>
   );
 }
