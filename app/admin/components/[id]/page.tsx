@@ -220,7 +220,7 @@ export default function ComponentEditorPage({
               </label>
               <select
                 {...register("category")}
-                className='w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'>
+                className='w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900'>
                 <option value='general'>General</option>
                 <option value='seo'>SEO</option>
                 <option value='media'>Media</option>
@@ -301,7 +301,7 @@ export default function ComponentEditorPage({
                             }
                           },
                         })}
-                        className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'
+                        className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
                         placeholder='Label'
                       />
                     </div>
@@ -310,7 +310,7 @@ export default function ComponentEditorPage({
                         {...register(`fields.${index}.name` as const, {
                           required: true,
                         })}
-                        className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md font-mono'
+                        className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md font-mono text-gray-900'
                         placeholder='fieldKey'
                       />
                     </div>

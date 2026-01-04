@@ -34,6 +34,7 @@ import clsx from "clsx";
 import { toast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { MediaItem } from "@/lib/types";
+import { UploadPreviewDialog } from "./UploadPreviewDialog";
 
 type ViewMode = "grid" | "list";
 type MediaFilter = "all" | "image" | "video" | "audio" | "document";
@@ -56,6 +57,8 @@ export default function MediaLibraryPage() {
   const [deleting, setDeleting] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [previewFiles, setPreviewFiles] = useState<File[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Fetch media
   useEffect(() => {
@@ -95,10 +98,26 @@ export default function MediaLibraryPage() {
     return true;
   });
 
-  // Handle file upload
-  const handleUpload = useCallback(async (files: FileList | File[]) => {
+  // Handle file selection
+  const handleFileSelect = useCallback((files: FileList | File[]) => {
+    const newFiles = Array.from(files);
+    // Filter duplicates if needed, or just append/replace
+    // For now, let's replace the selection or append?
+    // Usually "upload" button implies new batch.
+    setPreviewFiles(newFiles);
+    setShowPreview(true);
+  }, []);
+
+  const handleRemovePreview = (index: number) => {
+    setPreviewFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Perform actual upload
+  const performUpload = async () => {
+    if (previewFiles.length === 0) return;
+
     setUploading(true);
-    const uploadPromises = Array.from(files).map(async (file) => {
+    const uploadPromises = previewFiles.map(async (file) => {
       try {
         const formData = new FormData();
         formData.append("file", file);
@@ -124,10 +143,10 @@ export default function MediaLibraryPage() {
           resourceType: data.resourceType,
           format: data.format,
           bytes: data.bytes,
-          width: data.width,
-          height: data.height,
-          duration: data.duration,
-          folder: data.folder,
+          width: data.width ?? null,
+          height: data.height ?? null,
+          duration: data.duration ?? null,
+          folder: data.folder ?? "cms-media",
           createdAt: serverTimestamp(),
           uploadedBy: "admin", // TODO: Get from auth
         });
@@ -145,13 +164,16 @@ export default function MediaLibraryPage() {
 
     if (successful.length > 0) {
       toast.success(`${successful.length} file(s) uploaded successfully!`);
+      // Close preview on success
+      setShowPreview(false);
+      setPreviewFiles([]);
     }
     if (failed.length > 0) {
       toast.error(`${failed.length} file(s) failed to upload`);
     }
 
     setUploading(false);
-  }, []);
+  };
 
   // Handle delete
   const handleDelete = async (item: MediaItem) => {
@@ -200,10 +222,10 @@ export default function MediaLibraryPage() {
       e.stopPropagation();
       setDragActive(false);
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        handleUpload(e.dataTransfer.files);
+        handleFileSelect(e.dataTransfer.files);
       }
     },
-    [handleUpload]
+    [handleFileSelect]
   );
 
   // Copy URL to clipboard
@@ -258,7 +280,7 @@ export default function MediaLibraryPage() {
             type='file'
             multiple
             className='hidden'
-            onChange={(e) => e.target.files && handleUpload(e.target.files)}
+            onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
             disabled={uploading}
           />
         </label>
@@ -278,7 +300,7 @@ export default function MediaLibraryPage() {
                   placeholder='Search files...'
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className='w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                  className='w-full pl-9 pr-4 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                 />
               </div>
 
@@ -288,7 +310,7 @@ export default function MediaLibraryPage() {
                 <select
                   value={filter}
                   onChange={(e) => setFilter(e.target.value as MediaFilter)}
-                  className='text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'>
+                  className='text-sm text-gray-900 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'>
                   <option value='all'>All Files</option>
                   <option value='image'>Images</option>
                   <option value='video'>Videos</option>
@@ -570,7 +592,7 @@ export default function MediaLibraryPage() {
                     type='text'
                     readOnly
                     value={selectedMedia.secureUrl}
-                    className='flex-1 text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1.5 truncate'
+                    className='flex-1 text-xs text-gray-900 bg-gray-50 border border-gray-200 rounded px-2 py-1.5 truncate'
                   />
                   <button
                     onClick={() => copyUrl(selectedMedia.secureUrl)}
@@ -634,6 +656,16 @@ export default function MediaLibraryPage() {
           }
         }}
         loading={deleting}
+      />
+
+      {/* Upload Preview Dialog */}
+      <UploadPreviewDialog
+        open={showPreview}
+        onOpenChange={setShowPreview}
+        files={previewFiles}
+        onRemove={handleRemovePreview}
+        onUpload={performUpload}
+        uploading={uploading}
       />
     </div>
   );

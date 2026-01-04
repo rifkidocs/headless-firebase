@@ -301,8 +301,12 @@ export default function SchemaEditorPage({
       types: ["boolean", "enumeration", "json", "media"] as FieldType[],
     },
     {
+      name: "Components",
+      types: ["component", "dynamiczone"] as FieldType[],
+    },
+    {
       name: "Relation",
-      types: ["relation", "component", "dynamiczone"] as FieldType[],
+      types: ["relation"] as FieldType[],
     },
   ];
 
@@ -453,7 +457,7 @@ export default function SchemaEditorPage({
                       Select Field Type
                     </h3>
                   </div>
-                  <div className='p-4 max-h-[400px] overflow-y-auto'>
+                  <div className='p-4 max-h-[600px] overflow-y-auto'>
                     {fieldCategories.map((category) => (
                       <div key={category.name} className='mb-4 last:mb-0'>
                         <p className='text-xs font-bold text-gray-500 uppercase tracking-wider mb-2'>
@@ -632,7 +636,7 @@ export default function SchemaEditorPage({
                                 `fields.${index}.minLength` as const,
                                 { valueAsNumber: true }
                               )}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
                               placeholder='0'
                             />
                           </div>
@@ -646,7 +650,7 @@ export default function SchemaEditorPage({
                                 `fields.${index}.maxLength` as const,
                                 { valueAsNumber: true }
                               )}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
                               placeholder='Unlimited'
                             />
                           </div>
@@ -665,7 +669,7 @@ export default function SchemaEditorPage({
                               {...register(`fields.${index}.min` as const, {
                                 valueAsNumber: true,
                               })}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
                             />
                           </div>
                           <div>
@@ -677,7 +681,7 @@ export default function SchemaEditorPage({
                               {...register(`fields.${index}.max` as const, {
                                 valueAsNumber: true,
                               })}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
                             />
                           </div>
                         </div>
@@ -711,7 +715,7 @@ export default function SchemaEditorPage({
                                           };
                                           enumField.onChange(newOptions);
                                         }}
-                                        className='flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md'
+                                        className='flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
                                         placeholder='Option label'
                                       />
                                       <button
@@ -755,7 +759,7 @@ export default function SchemaEditorPage({
                               {...register(
                                 `fields.${index}.relation.type` as const
                               )}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'>
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'>
                               <option value='hasOne'>Has One</option>
                               <option value='hasMany'>Has Many</option>
                               <option value='belongsTo'>Belongs To</option>
@@ -770,7 +774,7 @@ export default function SchemaEditorPage({
                               {...register(
                                 `fields.${index}.relation.target` as const
                               )}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'>
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'>
                               {collections.map((col) => (
                                 <option key={col.slug} value={col.slug}>
                                   {col.label}
@@ -782,7 +786,7 @@ export default function SchemaEditorPage({
                       )}
 
                       {field.type === "component" && (
-                        <div className='grid grid-cols-2 gap-4'>
+                        <div className='flex flex-col gap-4'>
                           <div>
                             <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
                               Component
@@ -791,27 +795,104 @@ export default function SchemaEditorPage({
                               {...register(
                                 `fields.${index}.component.component` as const
                               )}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'>
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'>
                               {components.map((comp) => (
                                 <option key={comp.id} value={comp.id}>
                                   {comp.displayName}
                                 </option>
                               ))}
                             </select>
+                            {components.length === 0 && (
+                              <p className='text-xs text-red-500 mt-1'>
+                                No components found.{" "}
+                                <Link
+                                  href='/admin/components/new'
+                                  target='_blank'
+                                  className='underline hover:text-red-600'>
+                                  Create one first
+                                </Link>
+                                .
+                              </p>
+                            )}
                           </div>
-                          <div className='flex items-center pt-6'>
-                            <label className='flex items-center gap-2 cursor-pointer'>
-                              <input
-                                type='checkbox'
-                                {...register(
-                                  `fields.${index}.component.repeatable` as const
-                                )}
-                                className='w-4 h-4 text-blue-600 rounded border-gray-300'
-                              />
-                              <span className='text-sm text-gray-700'>
-                                Repeatable
-                              </span>
+
+                          <div>
+                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                              Type
                             </label>
+                            <div className='flex gap-4'>
+                              <label
+                                className={`flex-1 p-3 border rounded-lg cursor-pointer transition-all ${
+                                  !watch(`fields.${index}.component.repeatable`)
+                                    ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                                    : "border-gray-200 hover:border-gray-300"
+                                }`}>
+                                <div className='flex items-center gap-3'>
+                                  <input
+                                    type='radio'
+                                    value='single'
+                                    className='sr-only'
+                                    onChange={() =>
+                                      setValue(
+                                        `fields.${index}.component.repeatable`,
+                                        false
+                                      )
+                                    }
+                                    checked={
+                                      !watch(
+                                        `fields.${index}.component.repeatable`
+                                      )
+                                    }
+                                  />
+                                  <div className='p-2 bg-white rounded-md border border-gray-200'>
+                                    <Component className='w-4 h-4 text-gray-600' />
+                                  </div>
+                                  <div>
+                                    <p className='text-sm font-medium text-gray-900'>
+                                      Single component
+                                    </p>
+                                    <p className='text-xs text-gray-500'>
+                                      Best for fixed structures like SEO, Header
+                                    </p>
+                                  </div>
+                                </div>
+                              </label>
+
+                              <label
+                                className={`flex-1 p-3 border rounded-lg cursor-pointer transition-all ${
+                                  watch(`fields.${index}.component.repeatable`)
+                                    ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                                    : "border-gray-200 hover:border-gray-300"
+                                }`}>
+                                <div className='flex items-center gap-3'>
+                                  <input
+                                    type='radio'
+                                    value='repeatable'
+                                    className='sr-only'
+                                    onChange={() =>
+                                      setValue(
+                                        `fields.${index}.component.repeatable`,
+                                        true
+                                      )
+                                    }
+                                    checked={watch(
+                                      `fields.${index}.component.repeatable`
+                                    )}
+                                  />
+                                  <div className='p-2 bg-white rounded-md border border-gray-200'>
+                                    <Layers className='w-4 h-4 text-gray-600' />
+                                  </div>
+                                  <div>
+                                    <p className='text-sm font-medium text-gray-900'>
+                                      Repeatable component
+                                    </p>
+                                    <p className='text-xs text-gray-500'>
+                                      Best for lists like Slider, Testimonials
+                                    </p>
+                                  </div>
+                                </div>
+                              </label>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -825,7 +906,7 @@ export default function SchemaEditorPage({
                             {...register(
                               `fields.${index}.targetField` as const
                             )}
-                            className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'>
+                            className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'>
                             <option value=''>Select a field</option>
                             {fields
                               .filter((f) => f.type === "text" && f.name)
@@ -844,7 +925,7 @@ export default function SchemaEditorPage({
                         </label>
                         <input
                           {...register(`fields.${index}.description` as const)}
-                          className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md'
+                          className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
                           placeholder='Help text for this field'
                         />
                       </div>
@@ -855,7 +936,7 @@ export default function SchemaEditorPage({
             })}
 
             {fields.length === 0 && (
-              <div className='text-center py-12 border-2 border-dashed border-gray-200 rounded-lg'>
+              <div className='text-center py-24 border-2 border-dashed border-gray-200 rounded-lg'>
                 <Settings2 className='w-12 h-12 mx-auto mb-3 text-gray-300' />
                 <p className='text-gray-500 text-sm mb-2'>
                   No fields added yet.

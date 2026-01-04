@@ -53,13 +53,9 @@ export async function POST(request: NextRequest) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        // Convert buffer to base64 data URL for Cloudinary
-        const base64 = buffer.toString("base64");
-        const dataUrl = `data:${file.type};base64,${base64}`;
-
         const resourceType = getResourceType(file.type);
 
-        const result: UploadResult = await uploadToCloudinary(dataUrl, {
+        const result: UploadResult = await uploadToCloudinary(buffer, {
             folder,
             resource_type: resourceType,
         });
