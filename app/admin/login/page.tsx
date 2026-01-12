@@ -11,29 +11,46 @@ import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { LogIn, UserPlus, Eye, EyeOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+type FormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<FormData>({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange",
+  });
+
+  const onSubmit = async (data: FormData) => {
     setLoading(true);
     setError("");
 
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        await signInWithEmailAndPassword(auth, data.email, data.password);
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        await createUserWithEmailAndPassword(auth, data.email, data.password);
       }
       router.push("/admin");
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error(err);
       const errorMessage = isLogin
         ? "Failed to login. Please check your credentials."
@@ -124,19 +141,22 @@ export default function LoginPage() {
           )}
         </AnimatePresence>
 
-        <form onSubmit={handleSubmit} className='space-y-5'>
+        <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
           <div>
             <label className='block text-sm font-semibold text-gray-700 mb-1.5'>
               Email Address
             </label>
             <input
+              {...register("email")}
               type='email'
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className='w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 placeholder:text-gray-400 transition-all bg-gray-50/50 focus:bg-white'
+              className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 placeholder:text-gray-400 transition-all bg-gray-50/50 focus:bg-white ${
+                errors.email ? "border-red-500" : "border-gray-200"
+              }`}
               placeholder='name@company.com'
-              required
             />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1" data-testid="email-error">{errors.email.message}</p>
+            )}
           </div>
           <div>
             <label className='block text-sm font-semibold text-gray-700 mb-1.5'>
@@ -144,13 +164,12 @@ export default function LoginPage() {
             </label>
             <div className='relative'>
               <input
+                {...register("password")}
                 type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className='w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 placeholder:text-gray-400 transition-all bg-gray-50/50 focus:bg-white pr-12'
+                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 placeholder:text-gray-400 transition-all bg-gray-50/50 focus:bg-white pr-12 ${
+                  errors.password ? "border-red-500" : "border-gray-200"
+                }`}
                 placeholder='••••••••'
-                required
-                minLength={6}
               />
               <button
                 type='button'
@@ -163,6 +182,9 @@ export default function LoginPage() {
                 )}
               </button>
             </div>
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+            )}
             <AnimatePresence>
               {!isLogin && (
                 <motion.p
@@ -207,8 +229,7 @@ export default function LoginPage() {
             onClick={() => {
               setIsLogin(!isLogin);
               setError("");
-              setEmail("");
-              setPassword("");
+              reset();
             }}
             className='text-sm text-gray-600 hover:text-blue-600 font-medium transition-colors'>
             {isLogin ? (
