@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { toast } from "@/components/ui/Toast";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -25,7 +26,6 @@ type FormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -39,23 +39,40 @@ export default function LoginPage() {
     mode: "onChange",
   });
 
+  const getFirebaseErrorMessage = (error: any) => {
+    switch (error.code) {
+      case "auth/invalid-credential":
+        return "Invalid email or password. Please try again.";
+      case "auth/user-not-found":
+        return "No account found with this email.";
+      case "auth/wrong-password":
+        return "Incorrect password. Please try again.";
+      case "auth/email-already-in-use":
+        return "An account with this email already exists.";
+      case "auth/weak-password":
+        return "Password is too weak.";
+      case "auth/too-many-requests":
+        return "Too many failed attempts. Please try again later.";
+      default:
+        return error.message || "An unexpected error occurred.";
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     setLoading(true);
-    setError("");
 
     try {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, data.email, data.password);
+        toast.success("Signed in successfully!");
       } else {
         await createUserWithEmailAndPassword(auth, data.email, data.password);
+        toast.success("Account created successfully!");
       }
       router.push("/admin");
     } catch (err: any) {
       console.error(err);
-      const errorMessage = isLogin
-        ? "Failed to login. Please check your credentials."
-        : "Failed to register. Email might be already in use.";
-      setError(errorMessage);
+      toast.error(getFirebaseErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -63,14 +80,14 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    setError("");
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
+      toast.success("Signed in with Google!");
       router.push("/admin");
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error(err);
-      setError("Failed to login with Google.");
+      toast.error(getFirebaseErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -116,30 +133,6 @@ export default function LoginPage() {
               : "Get started with your new admin account"}
           </p>
         </div>
-
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className='bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2'>
-              <svg
-                className='w-4 h-4 shrink-0'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'>
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                />
-              </svg>
-              {error}
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
           <div>
@@ -228,7 +221,6 @@ export default function LoginPage() {
           <button
             onClick={() => {
               setIsLogin(!isLogin);
-              setError("");
               reset();
             }}
             className='text-sm text-gray-600 hover:text-blue-600 font-medium transition-colors'>
