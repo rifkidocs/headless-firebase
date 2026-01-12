@@ -4,7 +4,7 @@
 - [x] Task: Create Login Page Structure 6fa26be
     - [ ] Subtask: Create `/app/admin/login/page.tsx` skeleton.
     - [ ] Subtask: Implement basic layout using Tailwind CSS.
-- [ ] Task: Set up Auth Context/Hooks
+- [x] Task: Set up Auth Context/Hooks 07ede34
     - [ ] Subtask: Create a custom hook `useAuth` wrapping Firebase `onAuthStateChanged`.
     - [ ] Subtask: Create an AuthProvider component if necessary for global state.
 
