@@ -13,7 +13,7 @@
     - [ ] Subtask: Define Zod schema for login (email, password).
     - [ ] Subtask: Create form component using `react-hook-form` and `zod-resolver`.
     - [ ] Subtask: Implement input fields with error states.
-- [ ] Task: Integrate Firebase Authentication
+- [x] Task: Integrate Firebase Authentication 31b6fb3
     - [ ] Subtask: Connect form submission to `signInWithEmailAndPassword`.
     - [ ] Subtask: Handle loading states (disable button, show spinner).
     - [ ] Subtask: Handle specific Firebase errors (e.g., `auth/user-not-found`, `auth/wrong-password`) and display user-friendly messages via `react-hot-toast`.
