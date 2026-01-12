@@ -76,7 +76,8 @@ const FIELD_ICONS: Record<FieldType, React.ElementType> = {
 interface SchemaForm {
   label: string;
   slug: string;
-  kind: "collectionType" | "singleType";
+  kind: "collectionType" | "singleType" | "component";
+  category?: string;
   draftAndPublish: boolean;
   fields: Field[];
 }
@@ -180,15 +181,31 @@ export default function SchemaEditorPage({
 
     const fetchData = async () => {
       try {
-        const docRef = doc(db, "_collections", id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data() as SchemaForm;
+        // Try looking in collections first
+        const collectionRef = doc(db, "_collections", id);
+        const collectionSnap = await getDoc(collectionRef);
+
+        if (collectionSnap.exists()) {
+          const data = collectionSnap.data() as SchemaForm;
           setValue("label", data.label);
           setValue("slug", data.slug);
           setValue("kind", data.kind || "collectionType");
           setValue("draftAndPublish", data.draftAndPublish || false);
           setValue("fields", data.fields || []);
+        } else {
+          // If not in collections, check components
+          const componentRef = doc(db, "_components", id);
+          const componentSnap = await getDoc(componentRef);
+
+          if (componentSnap.exists()) {
+            const data = componentSnap.data() as ComponentDefinition;
+            setValue("label", data.displayName);
+            setValue("slug", data.id); // or name? id seems to be used as slug
+            setValue("kind", "component");
+            setValue("category", data.category);
+            setValue("draftAndPublish", false);
+            setValue("fields", data.fields || []);
+          }
         }
       } catch (error) {
         console.error("Error fetching schema:", error);
@@ -206,11 +223,28 @@ export default function SchemaEditorPage({
     try {
       const docId = isNew ? data.slug : id;
 
-      await setDoc(doc(db, "_collections", docId), {
-        ...data,
-        updatedAt: serverTimestamp(),
-        ...(isNew && { createdAt: serverTimestamp() }),
-      });
+      if (data.kind === "component") {
+        const componentData: ComponentDefinition = {
+          id: docId,
+          name: data.slug,
+          displayName: data.label,
+          category: data.category || "General",
+          fields: data.fields,
+          updatedAt: new Date(),
+        };
+
+        await setDoc(doc(db, "_components", docId), {
+          ...componentData,
+          updatedAt: serverTimestamp(),
+          ...(isNew && { createdAt: serverTimestamp() }),
+        });
+      } else {
+        await setDoc(doc(db, "_collections", docId), {
+          ...data,
+          updatedAt: serverTimestamp(),
+          ...(isNew && { createdAt: serverTimestamp() }),
+        });
+      }
 
       toast.success(isNew ? "Content type created!" : "Content type updated!");
       router.push("/admin/schema");
@@ -372,7 +406,7 @@ export default function SchemaEditorPage({
                 name='kind'
                 control={control}
                 render={({ field }) => (
-                  <div className='flex gap-4'>
+                  <div className='flex gap-4 flex-wrap'>
                     <label className='flex items-center gap-2 cursor-pointer'>
                       <input
                         type='radio'
@@ -395,32 +429,65 @@ export default function SchemaEditorPage({
                       />
                       <span className='text-sm text-gray-700'>Single Type</span>
                     </label>
+                    <label className='flex items-center gap-2 cursor-pointer'>
+                      <input
+                        type='radio'
+                        {...field}
+                        value='component'
+                        checked={field.value === "component"}
+                        className='w-4 h-4 text-blue-600'
+                      />
+                      <span className='text-sm text-gray-700'>Component</span>
+                    </label>
                   </div>
                 )}
               />
               <p className='text-xs text-gray-500 mt-1.5'>
                 {watch("kind") === "collectionType"
                   ? "Multiple entries (e.g., Blog Posts, Products)"
-                  : "Single entry (e.g., Homepage, Settings)"}
+                  : watch("kind") === "singleType"
+                  ? "Single entry (e.g., Homepage, Settings)"
+                  : "Reusable structure for other content types"}
               </p>
             </div>
-            <div className='flex items-center'>
-              <label className='flex items-center gap-3 cursor-pointer'>
+
+            {watch("kind") === "component" && (
+              <div>
+                <label className='block text-sm font-semibold text-gray-700 mb-2'>
+                  Category
+                </label>
                 <input
-                  type='checkbox'
-                  {...register("draftAndPublish")}
-                  className='w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500'
+                  {...register("category", { required: true })}
+                  className='w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 placeholder:text-gray-400'
+                  placeholder='e.g. Shared, SEO, Blocks'
                 />
-                <div>
-                  <span className='text-sm font-medium text-gray-700'>
-                    Enable Draft/Publish
-                  </span>
-                  <p className='text-xs text-gray-500'>
-                    Content must be published to appear in API
+                {errors.category && (
+                  <p className='text-red-500 text-xs mt-1.5'>
+                    Category is required
                   </p>
-                </div>
-              </label>
-            </div>
+                )}
+              </div>
+            )}
+
+            {watch("kind") !== "component" && (
+              <div className='flex items-center'>
+                <label className='flex items-center gap-3 cursor-pointer'>
+                  <input
+                    type='checkbox'
+                    {...register("draftAndPublish")}
+                    className='w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500'
+                  />
+                  <div>
+                    <span className='text-sm font-medium text-gray-700'>
+                      Enable Draft/Publish
+                    </span>
+                    <p className='text-xs text-gray-500'>
+                      Content must be published to appear in API
+                    </p>
+                  </div>
+                </label>
+              </div>
+            )}
           </div>
         </div>
 
