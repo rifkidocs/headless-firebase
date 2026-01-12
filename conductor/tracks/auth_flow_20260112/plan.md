@@ -1,6 +1,6 @@
 # Plan: Create User Authentication Flow
 
-## Phase 1: Foundation & Setup
+## Phase 1: Foundation & Setup [checkpoint: 2a87a65]
 - [x] Task: Create Login Page Structure 6fa26be
     - [ ] Subtask: Create `/app/admin/login/page.tsx` skeleton.
     - [ ] Subtask: Implement basic layout using Tailwind CSS.
