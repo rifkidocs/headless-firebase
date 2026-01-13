@@ -14,9 +14,9 @@ Focus on the data model and permission checking logic.
 ## Phase 2: Public API Permissions UI
 Build the interface for admins to manage public access.
 
-- [~] Task: Create unit tests for the API Permission Matrix UI component.
-- [ ] Task: Create a new `ApiPermissions` component that displays the Content Type / CRUD matrix.
-- [ ] Task: Integrate the `ApiPermissions` component into the "Roles & Permissions" (admin/roles) section.
+- [x] Task: Create unit tests for the API Permission Matrix UI component. e50ac8c
+- [x] Task: Create a new `ApiPermissions` component that displays the Content Type / CRUD matrix. e50ac8c
+- [~] Task: Integrate the `ApiPermissions` component into the "Roles & Permissions" (admin/roles) section.
 - [ ] Task: Implement save functionality to persist permission changes to Firestore.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Public API Permissions UI' (Protocol in workflow.md)
 
