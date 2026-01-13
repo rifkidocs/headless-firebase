@@ -9,6 +9,7 @@ import {
 } from "@/lib/permissions";
 import { Loader2, Save, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "@/components/ui/Toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ApiPermissionsProps {
   collections: CollectionConfig[];
@@ -134,21 +135,22 @@ export default function ApiPermissions({ collections }: ApiPermissionsProps) {
                     <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
                       {(Object.keys(colPermissions) as Array<keyof PublicPermissions>).map(
                         (action) => (
-                          <label
+                          <div
                             key={action}
-                            className='flex items-center gap-2 cursor-pointer'>
-                            <input
-                              type='checkbox'
+                            className='flex items-center gap-2'>
+                            <Checkbox
+                              id={`${col.slug}-${action}`}
                               checked={colPermissions[action]}
-                              onChange={(e) =>
-                                handlePermissionChange(col.slug, action, e.target.checked)
+                              onCheckedChange={(checked) =>
+                                handlePermissionChange(col.slug, action, !!checked)
                               }
-                              className='w-4 h-4 text-blue-600 rounded border-gray-300'
                             />
-                            <span className='text-sm text-gray-700 capitalize'>
+                            <label
+                              htmlFor={`${col.slug}-${action}`}
+                              className='text-sm text-gray-700 capitalize cursor-pointer select-none'>
                               {action}
-                            </span>
-                          </label>
+                            </label>
+                          </div>
                         )
                       )}
                     </div>

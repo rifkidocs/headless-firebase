@@ -24,6 +24,14 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { UserProfile, Role } from "@/lib/types";
 import clsx from "clsx";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 export default function UsersPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -173,19 +181,21 @@ export default function UsersPage() {
                       </div>
                     </td>
                     <td className='px-6 py-4'>
-                      <select
-                        value={user.roleId || ""}
-                        onChange={(e) =>
-                          handleRoleChange(user.id, e.target.value)
-                        }
-                        className='text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500'>
-                        <option value=''>No Role</option>
-                        {roles.map((role) => (
-                          <option key={role.id} value={role.id}>
-                            {role.name}
-                          </option>
-                        ))}
-                      </select>
+                      <Select
+                        onValueChange={(val) => handleRoleChange(user.id, val)}
+                        value={user.roleId || "none"}>
+                        <SelectTrigger className="w-[180px] h-9">
+                          <SelectValue placeholder="No Role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No Role</SelectItem>
+                          {roles.map((role) => (
+                            <SelectItem key={role.id} value={role.id}>
+                              {role.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </td>
                     <td className='px-6 py-4'>
                       <span

@@ -7,6 +7,15 @@ import clsx from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+
 interface FieldConfigModalProps {
   isOpen: boolean
   field: Field | null
@@ -135,18 +144,48 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
 
                       {/* Common Validation */}
                       <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                        <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-lg transition-colors">
-                          <input type="checkbox" {...register('required')} className="w-4 h-4 text-blue-600 rounded border-gray-300" />
-                          <span className="text-sm font-medium text-gray-900">Required Field</span>
-                        </label>
-                        <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-lg transition-colors">
-                          <input type="checkbox" {...register('unique')} className="w-4 h-4 text-blue-600 rounded border-gray-300" />
-                          <span className="text-sm font-medium text-gray-900">Unique Value</span>
-                        </label>
-                        <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-lg transition-colors">
-                          <input type="checkbox" {...register('private')} className="w-4 h-4 text-blue-600 rounded border-gray-300" />
-                          <span className="text-sm font-medium text-gray-900">Private (API Hide)</span>
-                        </label>
+                        <div className="flex items-center gap-3 p-2">
+                          <Controller
+                            name="required"
+                            control={control}
+                            render={({ field: f }) => (
+                              <Checkbox
+                                id="required"
+                                checked={f.value}
+                                onCheckedChange={f.onChange}
+                              />
+                            )}
+                          />
+                          <label htmlFor="required" className="text-sm font-medium text-gray-900 cursor-pointer">Required Field</label>
+                        </div>
+                        <div className="flex items-center gap-3 p-2">
+                          <Controller
+                            name="unique"
+                            control={control}
+                            render={({ field: f }) => (
+                              <Checkbox
+                                id="unique"
+                                checked={f.value}
+                                onCheckedChange={f.onChange}
+                              />
+                            )}
+                          />
+                          <label htmlFor="unique" className="text-sm font-medium text-gray-900 cursor-pointer">Unique Value</label>
+                        </div>
+                        <div className="flex items-center gap-3 p-2">
+                          <Controller
+                            name="private"
+                            control={control}
+                            render={({ field: f }) => (
+                              <Checkbox
+                                id="private"
+                                checked={f.value}
+                                onCheckedChange={f.onChange}
+                              />
+                            )}
+                          />
+                          <label htmlFor="private" className="text-sm font-medium text-gray-900 cursor-pointer">Private (API Hide)</label>
+                        </div>
                       </div>
 
                       {/* Type Specific */}
@@ -155,16 +194,25 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
                           <div className="flex flex-col gap-6">
                             <div>
                               <label className="block text-sm font-semibold text-gray-900 mb-2">Select Component</label>
-                              <select
-                                {...register('component.component', { required: 'Component is required' })}
-                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 bg-white"
-                              >
-                                {components.map((comp) => (
-                                  <option key={comp.id} value={comp.id}>
-                                    {comp.displayName}
-                                  </option>
-                                ))}
-                              </select>
+                              <Controller
+                                name="component.component"
+                                control={control}
+                                rules={{ required: 'Component is required' }}
+                                render={({ field: f }) => (
+                                  <Select onValueChange={f.onChange} value={f.value}>
+                                    <SelectTrigger className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 bg-white">
+                                      <SelectValue placeholder="Select a component" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {components.map((comp) => (
+                                        <SelectItem key={comp.id} value={comp.id}>
+                                          {comp.displayName}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
                               {components.length === 0 && (
                                 <p className="text-xs text-red-600 mt-1">
                                   No components found.{' '}
@@ -227,6 +275,52 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
                                   </div>
                                 </label>
                               </div>
+                            </div>
+                          </div>
+                        ) : fieldType === 'relation' ? (
+                          <div className="flex flex-col gap-6">
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-900 mb-2">Target Collection</label>
+                              <Controller
+                                name="relation.target"
+                                control={control}
+                                rules={{ required: 'Target is required' }}
+                                render={({ field: f }) => (
+                                  <Select onValueChange={f.onChange} value={f.value}>
+                                    <SelectTrigger className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 bg-white">
+                                      <SelectValue placeholder="Select a collection" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {collections.map((col) => (
+                                        <SelectItem key={col.slug} value={col.slug}>
+                                          {col.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-900 mb-2">Relation Type</label>
+                              <Controller
+                                name="relation.type"
+                                control={control}
+                                rules={{ required: 'Type is required' }}
+                                render={({ field: f }) => (
+                                  <Select onValueChange={f.onChange} value={f.value}>
+                                    <SelectTrigger className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 bg-white">
+                                      <SelectValue placeholder="Select relation type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="oneToOne">One-to-One</SelectItem>
+                                      <SelectItem value="oneToMany">One-to-Many</SelectItem>
+                                      <SelectItem value="manyToOne">Many-to-One</SelectItem>
+                                      <SelectItem value="manyToMany">Many-to-Many</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
                             </div>
                           </div>
                         ) : (

@@ -95,6 +95,15 @@ import {
 import { SortableField } from "@/components/cms/SortableField";
 import { reorder } from "@/lib/utils";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+
 interface SchemaForm {
   label: string;
   slug: string;
@@ -524,21 +533,27 @@ export default function SchemaEditorPage({
 
             {watch("kind") !== "component" && (
               <div className='flex items-center'>
-                <label className='flex items-center gap-3 cursor-pointer'>
-                  <input
-                    type='checkbox'
-                    {...register("draftAndPublish")}
-                    className='w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500'
-                  />
-                  <div>
-                    <span className='text-sm font-medium text-gray-700'>
-                      Enable Draft/Publish
-                    </span>
-                    <p className='text-xs text-gray-500'>
-                      Content must be published to appear in API
-                    </p>
-                  </div>
-                </label>
+                <Controller
+                  name="draftAndPublish"
+                  control={control}
+                  render={({ field: f }) => (
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="draftAndPublish"
+                        checked={f.value}
+                        onCheckedChange={f.onChange}
+                      />
+                      <div>
+                        <label htmlFor="draftAndPublish" className='text-sm font-medium text-gray-700 cursor-pointer'>
+                          Enable Draft/Publish
+                        </label>
+                        <p className='text-xs text-gray-500'>
+                          Content must be published to appear in API
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                />
               </div>
             )}
           </div>

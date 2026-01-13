@@ -16,6 +16,7 @@ A headless CMS built with Next.js, Firebase, and Cloudinary, designed to provide
 - **Integrated Media Management:** Seamless media handling using Cloudinary for storage, optimization, and delivery.
 - **Automated API Documentation:** Integrated interactive documentation using Scalar, providing a clear reference for developers.
 - **Dynamic Social Previews:** Automated Open Graph and Twitter metadata generation with dynamic, branded preview images for all content and pages.
+- **Modern & Accessible UI:** Clean, responsive admin interface built with Shadcn/UI and Radix UI primitives for a professional user experience.
 
 ## Delivery Method
 - **REST API:** Content is primarily exposed via standardized RESTful endpoints to ensure compatibility across a wide range of platforms and frameworks.

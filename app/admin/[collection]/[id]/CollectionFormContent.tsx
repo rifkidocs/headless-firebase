@@ -25,6 +25,7 @@ import {
   Plus,
   Trash2,
   GripVertical,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
@@ -33,6 +34,18 @@ import { RichTextEditor } from "@/components/cms/RichTextEditor";
 import { MediaPicker } from "@/components/cms/MediaPicker";
 import { Field, CollectionConfig, ComponentDefinition } from "@/lib/types";
 import slugify from "slugify";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import { Combobox } from "@/components/ui/Combobox";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function CollectionFormContent({
   collectionSlug,
@@ -358,17 +371,25 @@ function FormField({
       {/* Boolean */}
       {field.type === "boolean" && (
         <div className='flex items-center h-10'>
-          <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              type='checkbox'
-              {...register(field.name)}
-              className='sr-only peer'
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            <span className='ml-3 text-sm font-medium text-gray-700'>
-              {field.label}
-            </span>
-          </label>
+          <Controller
+            name={field.name}
+            control={control}
+            render={({ field: f }) => (
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id={field.name}
+                  checked={f.value}
+                  onCheckedChange={f.onChange}
+                />
+                <label
+                  htmlFor={field.name}
+                  className="text-sm font-medium text-gray-700 cursor-pointer"
+                >
+                  {field.label}
+                </label>
+              </div>
+            )}
+          />
         </div>
       )}
 
@@ -460,12 +481,25 @@ function FormField({
 
       {/* Enumeration */}
       {field.type === "enumeration" && (
-        <select {...register(field.name, { required: field.required })} className={baseInputClass}>
-          <option value=''>Select {field.label}</option>
-          {field.enumOptions?.map((opt: any) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+        <Controller
+          name={field.name}
+          control={control}
+          rules={{ required: field.required }}
+          render={({ field: f }) => (
+            <Select onValueChange={f.onChange} value={f.value}>
+              <SelectTrigger className={baseInputClass}>
+                <SelectValue placeholder={`Select ${field.label}`} />
+              </SelectTrigger>
+              <SelectContent>
+                {field.enumOptions?.map((opt: any) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
       )}
 
       {/* Media */}
@@ -490,42 +524,106 @@ function FormField({
             const items = relatedData[field.name] || [];
             const isMultiple = field.relation?.type === "hasMany" || field.relation?.type === "manyToMany";
 
-            if (isMultiple) {
-              const selectedIds = (f.value as string[]) || [];
-              return (
-                <div className='space-y-2'>
-                  <div className='flex flex-wrap gap-2'>
-                    {selectedIds.map((id) => {
-                      const item = items.find((i: any) => i.id === id);
-                      return (
-                        <span key={id} className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm'>
-                          {item?.label || id}
-                          <button type='button' onClick={() => f.onChange(selectedIds.filter((i) => i !== id))} className='hover:text-blue-600'><Trash2 className='w-3 h-3' /></button>
-                        </span>
-                      );
-                    })}
-                  </div>
-                  <select
-                    className={baseInputClass}
-                    onChange={(e) => {
-                      if (e.target.value && !selectedIds.includes(e.target.value)) {
-                        f.onChange([...selectedIds, e.target.value]);
-                      }
-                      e.target.value = "";
-                    }}>
-                    <option value=''>Add {field.label}</option>
-                    {items.filter((i: any) => !selectedIds.includes(i.id)).map((item: any) => (
-                      <option key={item.id} value={item.id}>{item.label}</option>
-                    ))}
-                  </select>
-                </div>
-              );
-            }
+                        if (isMultiple) {
+
+                          const selectedIds = (f.value as string[]) || [];
+
+                          return (
+
+                            <div className='space-y-3'>
+
+                              <div className='flex flex-wrap gap-2'>
+
+                                {selectedIds.map((id) => {
+
+                                  const item = items.find((i: any) => i.id === id);
+
+                                  return (
+
+                                    <Badge
+
+                                      key={id}
+
+                                      variant="secondary"
+
+                                      className="pl-3 pr-1 py-1 gap-1"
+
+                                    >
+
+                                      {item?.label || id}
+
+                                      <button
+
+                                        type='button'
+
+                                        onClick={() =>
+
+                                          f.onChange(selectedIds.filter((i) => i !== id))
+
+                                        }
+
+                                        className='hover:bg-gray-200 rounded-full p-0.5 transition-colors'>
+
+                                        <X className='w-3 h-3' />
+
+                                      </button>
+
+                                    </Badge>
+
+                                  );
+
+                                })}
+
+                              </div>
+
+                              <Combobox
+
+                                options={items
+
+                                  .filter((i: any) => !selectedIds.includes(i.id))
+
+                                  .map((item: any) => ({
+
+                                    value: item.id,
+
+                                    label: item.label,
+
+                                  }))}
+
+                                onValueChange={(val) => {
+
+                                  if (val && !selectedIds.includes(val)) {
+
+                                    f.onChange([...selectedIds, val]);
+
+                                  }
+
+                                }}
+
+                                placeholder={`Add ${field.label}...`}
+
+                                searchPlaceholder={`Search ${field.label.toLowerCase()}...`}
+
+                              />
+
+                            </div>
+
+                          );
+
+                        }
+
+            
             return (
-              <select {...f} className={baseInputClass}>
-                <option value=''>Select {field.label}</option>
-                {items.map((item: any) => <option key={item.id} value={item.id}>{item.label}</option>)}
-              </select>
+              <Combobox
+                options={items.map((item: any) => ({
+                  value: item.id,
+                  label: item.label,
+                }))}
+                value={f.value}
+                onValueChange={f.onChange}
+                placeholder={`Select ${field.label}`}
+                searchPlaceholder={`Search ${field.label.toLowerCase()}...`}
+              />
             );
           }}
         />
