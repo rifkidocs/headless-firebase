@@ -61,6 +61,9 @@ describe('Public Permissions', () => {
 
   describe('updatePublicPermissions', () => {
     it('should save permissions to firestore', async () => {
+      const mockDocRef = { id: 'posts' };
+      (doc as jest.Mock).mockReturnValue(mockDocRef);
+
       const permissions = {
         find: true,
         findOne: true,
@@ -72,7 +75,7 @@ describe('Public Permissions', () => {
       await updatePublicPermissions('posts', permissions);
 
       expect(doc).toHaveBeenCalledWith(db, '_permissions', 'posts');
-      expect(setDoc).toHaveBeenCalledWith(expect.anything(), permissions, { merge: true });
+      expect(setDoc).toHaveBeenCalledWith(mockDocRef, permissions, { merge: true });
     });
   });
 
