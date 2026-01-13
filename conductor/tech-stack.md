@@ -20,6 +20,7 @@
 - **Tailwind CSS:** Utility-first CSS framework for efficient styling.
 - **Radix UI:** Unstyled, accessible primitives for complex UI components like dialogs and menus.
 - **Framer Motion:** Library for smooth animations and transitions.
+- **@dnd-kit:** Modern, lightweight drag-and-drop toolkit for lists and sortables.
 - **Lucide React:** Icon set for consistent visual language.
 - **React Hot Toast:** Notification system for immediate user feedback.
 
