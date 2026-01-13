@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sidebar } from "@/components/cms/Sidebar";
 import { MobileNavbar } from "@/components/cms/MobileNavbar";
+import { MobileMenu } from "@/components/cms/MobileMenu";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useState } from "react";
 
@@ -54,6 +55,12 @@ export default function AdminLayout({
       <div className='flex-1 flex flex-col min-w-0'>
         {/* Mobile Navbar */}
         <MobileNavbar onOpenMenu={() => setIsMobileMenuOpen(true)} />
+
+        {/* Mobile Slide-over Menu */}
+        <MobileMenu
+          open={isMobileMenuOpen}
+          onOpenChange={setIsMobileMenuOpen}
+        />
 
         {/* Main Content */}
         <main className='flex-1 p-4 md:p-8 overflow-auto mt-16 md:mt-0'>
