@@ -16,7 +16,7 @@ Implement the core "Add Field" experience using a large modal and two-column lay
 - [x] Task: Create unit tests for the new `FieldModal` component (focusing on visibility and auto-focus). 06de83d
 - [x] Task: Implement the `FieldModal` component using a large-scale modal (e.g., Headless UI Dialog). dd2d5a0
 - [x] Task: Implement the two-column grid layout for field configuration inputs inside the modal. 47af547
-- [ ] Task: Add auto-focus logic to the "Display Name" input field within the modal.
+- [x] Task: Add auto-focus logic to the "Display Name" input field within the modal. 512a59a
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Full-Screen Field Modal' (Protocol in workflow.md)
 
 ## Phase 3: Drag-and-Drop Reordering
