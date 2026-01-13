@@ -30,7 +30,7 @@ Add interactive reordering to the schema field list.
 ## Phase 4: Integration & Polishing
 Ensure all components work together seamlessly and meet the visual standards.
 
-- [ ] Task: Create integration tests for the full "Add -> Reorder -> Edit" flow.
+- [x] Task: Create integration tests for the full "Add -> Reorder -> Edit" flow. 7fad925
 - [ ] Task: Connect the new Modal and Reordering logic to the existing schema state management.
 - [ ] Task: Apply final styling polishes and transitions (Tailwind CSS).
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Integration & Polishing' (Protocol in workflow.md)
