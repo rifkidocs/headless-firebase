@@ -74,6 +74,7 @@ const FIELD_ICONS: Record<FieldType, React.ElementType> = {
 };
 
 import SchemaEmptyState from "@/components/cms/SchemaEmptyState";
+import FieldModal from "@/components/cms/FieldModal";
 
 interface SchemaForm {
   label: string;
@@ -507,61 +508,18 @@ export default function SchemaEditorPage({
             <div className='relative'>
               <button
                 type='button'
-                onClick={() => setShowFieldPicker(!showFieldPicker)}
+                onClick={() => setShowFieldPicker(true)}
                 className='inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm'>
                 <Plus className='w-4 h-4' /> Add Field
-                <ChevronDown
-                  className={clsx(
-                    "w-4 h-4 transition-transform",
-                    showFieldPicker && "rotate-180"
-                  )}
-                />
               </button>
 
-              {/* Field Type Picker */}
-              {showFieldPicker && (
-                <div className='absolute right-0 mt-2 w-[500px] bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden'>
-                  <div className='p-4 border-b border-gray-200 bg-gray-50'>
-                    <h3 className='font-semibold text-gray-900'>
-                      Select Field Type
-                    </h3>
-                  </div>
-                  <div className='p-4 max-h-[600px] overflow-y-auto'>
-                    {fieldCategories.map((category) => (
-                      <div key={category.name} className='mb-4 last:mb-0'>
-                        <p className='text-xs font-bold text-gray-500 uppercase tracking-wider mb-2'>
-                          {category.name}
-                        </p>
-                        <div className='grid grid-cols-2 gap-2'>
-                          {category.types.map((type) => {
-                            const config = FIELD_TYPE_CONFIG[type];
-                            const Icon = FIELD_ICONS[type];
-                            return (
-                              <button
-                                key={type}
-                                type='button'
-                                onClick={() => addField(type)}
-                                className='flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-left group'>
-                                <div className='p-2 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors'>
-                                  <Icon className='w-4 h-4 text-gray-600 group-hover:text-blue-600' />
-                                </div>
-                                <div className='flex-1 min-w-0'>
-                                  <p className='text-sm font-medium text-gray-900'>
-                                    {config.label}
-                                  </p>
-                                  <p className='text-xs text-gray-500 truncate'>
-                                    {config.description}
-                                  </p>
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <FieldModal
+                isOpen={showFieldPicker}
+                onClose={() => setShowFieldPicker(false)}
+                onSelect={(type) => {
+                  addField(type);
+                }}
+              />
             </div>
           </div>
 
