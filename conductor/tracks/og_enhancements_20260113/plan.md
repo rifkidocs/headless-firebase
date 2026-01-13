@@ -16,8 +16,8 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Static Pages' (Protocol in workflow.md)
 
 ## Phase 3: Dynamic Collection Metadata
-- [ ] Task: Implement `generateMetadata` for dynamic collection list pages (`app/admin/[collection]/page.tsx`).
-- [ ] Task: Implement `generateMetadata` for dynamic collection entry pages (`app/admin/[collection]/[id]/page.tsx`).
+- [~] Task: Implement `generateMetadata` for dynamic collection list pages (`app/admin/[collection]/page.tsx`).
+- [~] Task: Implement `generateMetadata` for dynamic collection entry pages (`app/admin/[collection]/[id]/page.tsx`).
     - Logic to fetch entry data and map "Title" and "Description" automatically from fields.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Dynamic Collections' (Protocol in workflow.md)
 
