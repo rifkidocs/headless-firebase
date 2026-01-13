@@ -10,6 +10,7 @@ import {
   deleteDoc,
   doc,
   query,
+  getDoc,
 } from "firebase/firestore";
 import {
   Plus,
@@ -28,13 +29,13 @@ const ITEMS_PER_PAGE = 10;
 
 export default function CollectionListContent({
   collectionSlug,
-  initialConfig
 }: {
   collectionSlug: string;
-  initialConfig: CollectionConfig;
 }) {
+  const [collectionConfig, setCollectionConfig] = useState<CollectionConfig | null>(null);
   const [documents, setDocuments] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
+  const [configLoading, setConfigLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -46,7 +47,28 @@ export default function CollectionListContent({
   });
   const [deleting, setDeleting] = useState(false);
 
+  // Fetch dynamic config
   useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const configDoc = await getDoc(doc(db, "_collections", collectionSlug));
+        if (configDoc.exists()) {
+          setCollectionConfig({ slug: collectionSlug, ...configDoc.data() } as CollectionConfig);
+        } else {
+          setCollectionConfig(null);
+        }
+      } catch (e) {
+        console.error("Error fetching config", e);
+      } finally {
+        setConfigLoading(false);
+      }
+    };
+    fetchConfig();
+  }, [collectionSlug]);
+
+  useEffect(() => {
+    if (configLoading || !collectionConfig) return;
+
     const q = query(collection(db, collectionSlug));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map((doc) => ({
@@ -58,7 +80,7 @@ export default function CollectionListContent({
     });
 
     return () => unsubscribe();
-  }, [collectionSlug]);
+  }, [collectionSlug, collectionConfig, configLoading]);
 
   // Filter and paginate
   const filteredDocuments = useMemo(() => {
@@ -77,6 +99,18 @@ export default function CollectionListContent({
     currentPage * ITEMS_PER_PAGE
   );
 
+  if (configLoading) {
+    return (
+      <div className='flex justify-center items-center h-96'>
+        <Loader2 className='w-8 h-8 animate-spin text-blue-600' />
+      </div>
+    );
+  }
+
+  if (!collectionConfig) {
+    return notFound();
+  }
+
   const handleDelete = async (docToDelete: Record<string, unknown>) => {
     setDeleting(true);
     try {
@@ -91,7 +125,7 @@ export default function CollectionListContent({
     }
   };
 
-  const displayFields = initialConfig.fields?.slice(0, 4) || [];
+  const displayFields = collectionConfig.fields?.slice(0, 4) || [];
 
   return (
     <div className='max-w-7xl mx-auto'>
@@ -99,7 +133,7 @@ export default function CollectionListContent({
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8'>
         <div>
           <h1 className='text-3xl font-bold text-gray-900 capitalize tracking-tight'>
-            {initialConfig.label}
+            {collectionConfig.label}
           </h1>
           <p className='text-gray-500 mt-1 text-sm'>
             {filteredDocuments.length}{" "}

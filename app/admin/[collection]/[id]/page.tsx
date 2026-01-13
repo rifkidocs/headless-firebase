@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { CollectionConfig } from "@/lib/types";
@@ -7,18 +6,26 @@ import { constructMetadata } from "@/lib/metadata-utils";
 import CollectionFormContent from "./CollectionFormContent";
 
 async function getCollectionConfig(slug: string): Promise<CollectionConfig | null> {
-  const configDoc = await getDoc(doc(db, "_collections", slug));
-  if (configDoc.exists()) {
-    return { slug, ...configDoc.data() } as CollectionConfig;
+  try {
+    const configDoc = await getDoc(doc(db, "_collections", slug));
+    if (configDoc.exists()) {
+      return { slug, ...configDoc.data() } as CollectionConfig;
+    }
+  } catch (e) {
+    console.warn("Server-side config fetch failed, using defaults.");
   }
   return null;
 }
 
 async function getEntryData(collectionSlug: string, id: string): Promise<Record<string, any> | null> {
   if (id === "new") return null;
-  const docSnap = await getDoc(doc(db, collectionSlug, id));
-  if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() };
+  try {
+    const docSnap = await getDoc(doc(db, collectionSlug, id));
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    }
+  } catch (e) {
+    console.warn("Server-side entry fetch failed, using defaults.");
   }
   return null;
 }
@@ -29,9 +36,16 @@ export async function generateMetadata({
   params: Promise<{ collection: string; id: string }>;
 }): Promise<Metadata> {
   const { collection: collectionSlug, id } = await params;
+  
   const config = await getCollectionConfig(collectionSlug);
   
-  if (!config) return constructMetadata({ title: "Collection Not Found" });
+  if (!config) {
+    return constructMetadata({ 
+      title: `${collectionSlug.charAt(0).toUpperCase() + collectionSlug.slice(1)} | Admin CMS`,
+      imageSubtitle: "Collection" 
+    });
+  }
+
   if (id === "new") {
     return constructMetadata({
       title: `New ${config.label} | Admin CMS`,
@@ -40,7 +54,13 @@ export async function generateMetadata({
   }
 
   const entryData = await getEntryData(collectionSlug, id);
-  if (!entryData) return constructMetadata({ title: "Entry Not Found" });
+  
+  if (!entryData) {
+    return constructMetadata({
+      title: `Edit Entry | ${config.label}`,
+      imageSubtitle: config.label,
+    });
+  }
 
   // Map title and description automatically
   const titleField = config.fields?.find(f => f.name === "title" || f.name === "name" || f.label.toLowerCase() === "title")?.name || "id";
@@ -65,19 +85,11 @@ export default async function CollectionFormPage({
   params: Promise<{ collection: string; id: string }>;
 }) {
   const { collection: collectionSlug, id } = await params;
-  const config = await getCollectionConfig(collectionSlug);
-  const entryData = await getEntryData(collectionSlug, id);
-
-  if (!config) {
-    return notFound();
-  }
 
   return (
     <CollectionFormContent 
       collectionSlug={collectionSlug} 
       id={id}
-      initialConfig={config}
-      initialData={entryData}
     />
   );
 }

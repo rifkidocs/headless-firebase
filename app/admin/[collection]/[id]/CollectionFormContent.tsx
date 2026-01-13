@@ -37,17 +37,15 @@ import slugify from "slugify";
 export default function CollectionFormContent({
   collectionSlug,
   id,
-  initialConfig,
-  initialData
 }: {
   collectionSlug: string;
   id: string;
-  initialConfig: CollectionConfig;
-  initialData: Record<string, unknown> | null;
 }) {
   const isNew = id === "new";
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [collectionConfig, setCollectionConfig] = useState<CollectionConfig | null>(null);
   const [components, setComponents] = useState<
     Record<string, ComponentDefinition>
   >({});
@@ -59,12 +57,75 @@ export default function CollectionFormContent({
     register,
     handleSubmit,
     control,
+    reset,
     formState: { errors },
-  } = useForm({
-    defaultValues: initialData || {}
-  });
+  } = useForm();
 
-  // Fetch components for component fields
+  // 1. Fetch Config
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const configDoc = await getDoc(doc(db, "_collections", collectionSlug));
+        if (configDoc.exists()) {
+          const config = configDoc.data() as CollectionConfig;
+          setCollectionConfig(config);
+
+          // Fetch related data
+          const relationFields = config.fields?.filter((f) => f.type === "relation") || [];
+          for (const field of relationFields) {
+            if (field.relation?.target) {
+              try {
+                const relDocs = await getDocs(collection(db, field.relation.target));
+                const items = relDocs.docs.map((d) => ({
+                  id: d.id,
+                  label: d.data().title || d.data().name || d.id,
+                }));
+                setRelatedData((prev) => ({ ...prev, [field.name]: items }));
+              } catch { /* ignore */ }
+            }
+          }
+        } else {
+          setCollectionConfig(null);
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error("Error fetching config", e);
+        setLoading(false);
+      }
+    };
+    fetchConfig();
+  }, [collectionSlug]);
+
+  // 2. Fetch Data if Edit
+  useEffect(() => {
+    if (!collectionConfig) return;
+
+    const fetchData = async () => {
+      if (isNew) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const docRef = doc(db, collectionSlug, id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          reset(docSnap.data());
+        } else {
+          notFound();
+        }
+      } catch (error) {
+        console.error("Error fetching document:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [collectionSlug, id, isNew, collectionConfig, reset]);
+
+  // Fetch components
   useEffect(() => {
     const q = query(collection(db, "_components"), orderBy("displayName"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -77,36 +138,23 @@ export default function CollectionFormContent({
     return () => unsubscribe();
   }, []);
 
-  // Fetch related data for relation fields
-  useEffect(() => {
-    const fetchRelated = async () => {
-      const relationFields =
-        initialConfig.fields?.filter((f) => f.type === "relation") || [];
-      for (const field of relationFields) {
-        if (field.relation?.target) {
-          try {
-            const relDocs = await getDocs(
-              collection(db, field.relation.target)
-            );
-            const items = relDocs.docs.map((d) => ({
-              id: d.id,
-              label: d.data().title || d.data().name || d.id,
-            }));
-            setRelatedData((prev) => ({ ...prev, [field.name]: items }));
-          } catch {
-            // Collection might not exist yet
-          }
-        }
-      }
-    };
-    fetchRelated();
-  }, [initialConfig]);
+  if (loading) {
+    return (
+      <div className='flex justify-center items-center h-96'>
+        <Loader2 className='w-8 h-8 animate-spin text-blue-600' />
+      </div>
+    );
+  }
+
+  if (!collectionConfig) {
+    return notFound();
+  }
 
   const onSubmit = async (data: Record<string, unknown>) => {
     setSaving(true);
     try {
       // Handle UID fields
-      for (const field of initialConfig.fields || []) {
+      for (const field of collectionConfig.fields || []) {
         if (field.type === "uid" && field.targetField) {
           const sourceValue = data[field.targetField] as string;
           if (sourceValue && !data[field.name]) {
@@ -152,13 +200,13 @@ export default function CollectionFormContent({
         <div>
           <h1 className='text-2xl font-bold text-gray-900 tracking-tight'>
             {isNew
-              ? `Create ${initialConfig.label}`
-              : `Edit ${initialConfig.label}`}
+              ? `Create ${collectionConfig.label}`
+              : `Edit ${collectionConfig.label}`}
           </h1>
           <p className='text-sm text-gray-500 mt-1'>
             {isNew
-              ? `Add a new entry to ${initialConfig.label}`
-              : `Update existing ${initialConfig.label}`}
+              ? `Add a new entry to ${collectionConfig.label}`
+              : `Update existing ${collectionConfig.label}`}
           </p>
         </div>
       </div>
@@ -167,7 +215,7 @@ export default function CollectionFormContent({
         onSubmit={handleSubmit(onSubmit)}
         className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
         <div className='p-8 space-y-6'>
-          {initialConfig.fields?.map((field) => (
+          {collectionConfig.fields?.map((field) => (
             <FormField
               key={field.name}
               field={field}
@@ -179,8 +227,8 @@ export default function CollectionFormContent({
             />
           ))}
 
-          {(!initialConfig.fields ||
-            initialConfig.fields.length === 0) && (
+          {(!collectionConfig.fields ||
+            collectionConfig.fields.length === 0) && (
             <div className='text-center py-8 text-gray-500'>
               <p>No fields defined for this content type.</p>
               <Link
@@ -220,7 +268,7 @@ export default function CollectionFormContent({
   );
 }
 
-// ... FormField and other helper components (keep same as original)
+// Re-including FormField helper (matching original logic)
 function FormField({
   field,
   register,
@@ -324,7 +372,7 @@ function FormField({
         </div>
       )}
 
-      {/* Date */}
+      {/* Date/Time Fields */}
       {field.type === "date" && (
         <div className='relative'>
           <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
@@ -338,7 +386,6 @@ function FormField({
         </div>
       )}
 
-      {/* DateTime */}
       {field.type === "datetime" && (
         <input
           type='datetime-local'
@@ -347,7 +394,6 @@ function FormField({
         />
       )}
 
-      {/* Time */}
       {field.type === "time" && (
         <input
           type='time'
@@ -400,22 +446,12 @@ function FormField({
           rules={{ required: field.required }}
           render={({ field: f }) => (
             <textarea
-              value={
-                typeof f.value === "object"
-                  ? JSON.stringify(f.value, null, 2)
-                  : f.value || ""
-              }
+              value={typeof f.value === "object" ? JSON.stringify(f.value, null, 2) : f.value || ""}
               onChange={(e) => {
-                try {
-                  f.onChange(JSON.parse(e.target.value));
-                } catch {
-                  f.onChange(e.target.value);
-                }
+                try { f.onChange(JSON.parse(e.target.value)); } 
+                catch { f.onChange(e.target.value); }
               }}
-              className={clsx(
-                baseInputClass,
-                "font-mono text-sm min-h-[150px]"
-              )}
+              className={clsx(baseInputClass, "font-mono text-sm min-h-[150px]")}
               placeholder='{ "key": "value" }'
             />
           )}
@@ -424,14 +460,10 @@ function FormField({
 
       {/* Enumeration */}
       {field.type === "enumeration" && (
-        <select
-          {...register(field.name, { required: field.required })}
-          className={baseInputClass}>
+        <select {...register(field.name, { required: field.required })} className={baseInputClass}>
           <option value=''>Select {field.label}</option>
           {field.enumOptions?.map((opt: any) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
       )}
@@ -443,12 +475,7 @@ function FormField({
           control={control}
           rules={{ required: field.required }}
           render={({ field: f }) => (
-            <MediaPicker
-              value={f.value}
-              onChange={f.onChange}
-              multiple={false}
-              accept='all'
-            />
+            <MediaPicker value={f.value} onChange={f.onChange} multiple={false} accept='all' />
           )}
         />
       )}
@@ -461,9 +488,7 @@ function FormField({
           rules={{ required: field.required }}
           render={({ field: f }) => {
             const items = relatedData[field.name] || [];
-            const isMultiple =
-              field.relation?.type === "hasMany" ||
-              field.relation?.type === "manyToMany";
+            const isMultiple = field.relation?.type === "hasMany" || field.relation?.type === "manyToMany";
 
             if (isMultiple) {
               const selectedIds = (f.value as string[]) || [];
@@ -473,18 +498,9 @@ function FormField({
                     {selectedIds.map((id) => {
                       const item = items.find((i: any) => i.id === id);
                       return (
-                        <span
-                          key={id}
-                          className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm'>
+                        <span key={id} className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm'>
                           {item?.label || id}
-                          <button
-                            type='button'
-                            onClick={() =>
-                              f.onChange(selectedIds.filter((i) => i !== id))
-                            }
-                            className='hover:text-blue-600'>
-                            <Trash2 className='w-3 h-3' />
-                          </button>
+                          <button type='button' onClick={() => f.onChange(selectedIds.filter((i) => i !== id))} className='hover:text-blue-600'><Trash2 className='w-3 h-3' /></button>
                         </span>
                       );
                     })}
@@ -492,35 +508,23 @@ function FormField({
                   <select
                     className={baseInputClass}
                     onChange={(e) => {
-                      if (
-                        e.target.value &&
-                        !selectedIds.includes(e.target.value)
-                      ) {
+                      if (e.target.value && !selectedIds.includes(e.target.value)) {
                         f.onChange([...selectedIds, e.target.value]);
                       }
                       e.target.value = "";
                     }}>
                     <option value=''>Add {field.label}</option>
-                    {items
-                      .filter((i: any) => !selectedIds.includes(i.id))
-                      .map((item: any) => (
-                        <option key={item.id} value={item.id}>
-                          {item.label}
-                        </option>
-                      ))}
+                    {items.filter((i: any) => !selectedIds.includes(i.id)).map((item: any) => (
+                      <option key={item.id} value={item.id}>{item.label}</option>
+                    ))}
                   </select>
                 </div>
               );
             }
-
             return (
               <select {...f} className={baseInputClass}>
                 <option value=''>Select {field.label}</option>
-                {items.map((item: any) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
+                {items.map((item: any) => <option key={item.id} value={item.id}>{item.label}</option>)}
               </select>
             );
           }}
@@ -534,51 +538,31 @@ function FormField({
           control={control}
           render={({ field: f }) => {
             const compDef = components[field.component?.component || ""];
-            if (!compDef) {
-              return (
-                <p className='text-gray-500 text-sm'>Component not found</p>
-              );
-            }
+            if (!compDef) return <p className='text-gray-500 text-sm'>Component not found</p>;
 
             if (field.component?.repeatable) {
               const items = (f.value as Record<string, unknown>[]) || [];
               return (
                 <div className='space-y-3'>
                   {items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className='border border-gray-200 rounded-lg p-4 bg-gray-50'>
+                    <div key={idx} className='border border-gray-200 rounded-lg p-4 bg-gray-50'>
                       <div className='flex items-center justify-between mb-3'>
                         <div className='flex items-center gap-2 text-gray-400'>
                           <GripVertical className='w-4 h-4' />
-                          <span className='text-sm font-medium text-gray-700'>
-                            {compDef.displayName} #{idx + 1}
-                          </span>
+                          <span className='text-sm font-medium text-gray-700'>{compDef.displayName} #{idx + 1}</span>
                         </div>
-                        <button
-                          type='button'
-                          onClick={() =>
-                            f.onChange(items.filter((_, i) => i !== idx))
-                          }
-                          className='p-1 text-gray-400 hover:text-red-500'>
-                          <Trash2 className='w-4 h-4' />
-                        </button>
+                        <button type='button' onClick={() => f.onChange(items.filter((_, i) => i !== idx))} className='p-1 text-gray-400 hover:text-red-500'><Trash2 className='w-4 h-4' /></button>
                       </div>
                       <div className='space-y-4'>
                         {compDef.fields?.map((cf) => (
                           <div key={cf.name}>
-                            <label className='block text-xs font-medium text-gray-600 mb-1'>
-                              {cf.label}
-                            </label>
+                            <label className='block text-xs font-medium text-gray-600 mb-1'>{cf.label}</label>
                             <input
                               type='text'
                               value={(item[cf.name] as string) || ""}
                               onChange={(e) => {
                                 const newItems = [...items];
-                                newItems[idx] = {
-                                  ...newItems[idx],
-                                  [cf.name]: e.target.value,
-                                };
+                                newItems[idx] = { ...newItems[idx], [cf.name]: e.target.value };
                                 f.onChange(newItems);
                               }}
                               className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
@@ -589,32 +573,20 @@ function FormField({
                       </div>
                     </div>
                   ))}
-                  <button
-                    type='button'
-                    onClick={() => f.onChange([...items, {}])}
-                    className='flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium'>
-                    <Plus className='w-4 h-4' />
-                    Add {compDef.displayName}
-                  </button>
+                  <button type='button' onClick={() => f.onChange([...items, {}])} className='flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium'><Plus className='w-4 h-4' />Add {compDef.displayName}</button>
                 </div>
               );
             }
-
-            // Single component
             const value = (f.value as Record<string, unknown>) || {};
             return (
               <div className='border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-4'>
                 {compDef.fields?.map((cf) => (
                   <div key={cf.name}>
-                    <label className='block text-xs font-medium text-gray-600 mb-1'>
-                      {cf.label}
-                    </label>
+                    <label className='block text-xs font-medium text-gray-600 mb-1'>{cf.label}</label>
                     <input
                       type='text'
                       value={(value[cf.name] as string) || ""}
-                      onChange={(e) =>
-                        f.onChange({ ...value, [cf.name]: e.target.value })
-                      }
+                      onChange={(e) => f.onChange({ ...value, [cf.name]: e.target.value })}
                       className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
                       placeholder={cf.placeholder}
                     />
@@ -626,12 +598,7 @@ function FormField({
         />
       )}
 
-      {/* Error Message */}
-      {error && (
-        <p className='text-red-500 text-xs mt-1.5 font-medium flex items-center gap-1'>
-          {error.message?.toString() || "This field is required"}
-        </p>
-      )}
+      {error && <p className='text-red-500 text-xs mt-1.5 font-medium flex items-center gap-1'>{error.message?.toString() || "This field is required"}</p>}
     </div>
   );
 }
