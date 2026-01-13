@@ -9,10 +9,10 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Foundation' (Protocol in workflow.md) (4ac7e58)
 
 ## Phase 2: Global and Static Page Enhancements
-- [ ] Task: Update Root Layout (`app/layout.tsx`) with global SEO fallbacks.
-- [ ] Task: Implement metadata for the Home page (`app/page.tsx`).
-- [ ] Task: Implement metadata for the Admin Login page (`app/admin/login/page.tsx`).
-- [ ] Task: Implement metadata for the Documentation page (`app/docs/page.tsx`).
+- [~] Task: Update Root Layout (`app/layout.tsx`) with global SEO fallbacks.
+- [~] Task: Implement metadata for the Home page (`app/page.tsx`).
+- [~] Task: Implement metadata for the Admin Login page (`app/admin/login/page.tsx`).
+- [~] Task: Implement metadata for the Documentation page (`app/docs/page.tsx`).
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Static Pages' (Protocol in workflow.md)
 
 ## Phase 3: Dynamic Collection Metadata

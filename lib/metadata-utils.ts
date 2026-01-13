@@ -17,6 +17,7 @@ export function constructMetadata({
   const ogImageUrl = getOgImageUrl(title, imageSubtitle);
 
   return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
     title,
     description,
     openGraph: {

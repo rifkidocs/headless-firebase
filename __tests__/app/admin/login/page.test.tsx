@@ -1,6 +1,6 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import LoginPage from '@/app/admin/login/page'
+import AdminLoginContent from '@/app/admin/login/AdminLoginContent'
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
 
 // Mock next/navigation
@@ -45,20 +45,20 @@ jest.mock('@/components/ui/Toast', () => ({
   },
 }))
 
-describe('LoginPage', () => {
+describe('AdminLoginContent', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
   it('renders the login page', () => {
-    render(<LoginPage />)
+    render(<AdminLoginContent />)
     expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument()
   })
 
   it('calls signInWithEmailAndPassword with correct arguments on submit', async () => {
     const user = userEvent.setup()
-    render(<LoginPage />)
+    render(<AdminLoginContent />)
     
     await user.type(screen.getByPlaceholderText(/name@company.com/i), 'test@example.com')
     await user.type(screen.getByPlaceholderText(/••••••••/i), 'password123')
@@ -75,7 +75,7 @@ describe('LoginPage', () => {
     const user = userEvent.setup()
     ;(signInWithEmailAndPassword as jest.Mock).mockRejectedValue({ code: 'auth/invalid-credential' })
     
-    render(<LoginPage />)
+    render(<AdminLoginContent />)
     
     await user.type(screen.getByPlaceholderText(/name@company.com/i), 'wrong@example.com')
     await user.type(screen.getByPlaceholderText(/••••••••/i), 'wrongpass')
@@ -89,7 +89,7 @@ describe('LoginPage', () => {
 
   it('shows validation error for invalid email', async () => {
     const user = userEvent.setup()
-    render(<LoginPage />)
+    render(<AdminLoginContent />)
     
     const emailInput = screen.getByPlaceholderText(/name@company.com/i)
     await user.type(emailInput, 'invalid-email')
@@ -100,7 +100,7 @@ describe('LoginPage', () => {
 
   it('shows validation error for short password', async () => {
     const user = userEvent.setup()
-    render(<LoginPage />)
+    render(<AdminLoginContent />)
     
     const passwordInput = screen.getByPlaceholderText(/••••••••/i)
     await user.type(passwordInput, '123')
@@ -111,7 +111,7 @@ describe('LoginPage', () => {
 
   it('calls signInWithPopup with GoogleAuthProvider on Google login click', async () => {
     const user = userEvent.setup()
-    render(<LoginPage />)
+    render(<AdminLoginContent />)
     
     await user.click(screen.getByRole('button', { name: /google account/i }))
 

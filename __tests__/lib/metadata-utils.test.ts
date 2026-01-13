@@ -1,12 +1,6 @@
 import { constructMetadata } from '@/lib/metadata-utils'
-import { cloudinary } from '@/lib/cloudinary'
 
 describe('constructMetadata', () => {
-  beforeEach(() => {
-    cloudinary.config({
-      cloud_name: 'test-cloud'
-    })
-  })
   it('returns default metadata when no options provided', () => {
     const metadata = constructMetadata()
     expect(metadata.title).toBe('Headless Firebase CMS')
@@ -30,7 +24,7 @@ describe('constructMetadata', () => {
       title: 'Post Title',
     })
     const ogImage = (metadata.openGraph?.images as any)[0]
-    expect(ogImage.url).toContain('l_text:Arial_60_bold:Post%20Title')
+    expect(ogImage.url).toContain('/api/og?title=Post+Title')
   })
 
   it('includes robots: noindex when noIndex is true', () => {
