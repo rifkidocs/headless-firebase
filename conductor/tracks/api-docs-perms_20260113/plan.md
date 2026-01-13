@@ -11,19 +11,19 @@ Focus on the data model and permission checking logic.
 - [x] Task: Integrate the permission check into the existing API routes (`app/api/...`). 70bf99b
 - [x] Task: Conductor - User Manual Verification 'Phase 1: API Permissions Backend & Infrastructure'
 
-## Phase 2: Public API Permissions UI
+## Phase 2: Public API Permissions UI [checkpoint: c0891d8]
 Build the interface for admins to manage public access.
 
 - [x] Task: Create unit tests for the API Permission Matrix UI component. e50ac8c
 - [x] Task: Create a new `ApiPermissions` component that displays the Content Type / CRUD matrix. e50ac8c
 - [x] Task: Integrate the `ApiPermissions` component into the "Roles & Permissions" (admin/roles) section. ddf2392
-- [~] Task: Implement save functionality to persist permission changes to Firestore.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Public API Permissions UI' (Protocol in workflow.md)
+- [x] Task: Implement save functionality to persist permission changes to Firestore. c0891d8
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Public API Permissions UI'
 
 ## Phase 3: Scalar API Documentation
 Implement the interactive documentation interface.
 
-- [ ] Task: Create unit tests for the OpenAPI specification generator.
+- [~] Task: Create unit tests for the OpenAPI specification generator.
 - [ ] Task: Implement a dynamic OpenAPI spec generator that iterates through existing Firestore collection schemas.
 - [ ] Task: Install `@scalar/api-reference` and create the `/admin/docs` page.
 - [ ] Task: Secure the `/admin/docs` route to ensure it's only accessible to authenticated admin users.
