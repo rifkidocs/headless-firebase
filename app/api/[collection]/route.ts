@@ -10,6 +10,7 @@ export async function GET(
   const { collection: collectionSlug } = await params;
 
   const isPublic = await checkPublicPermission(collectionSlug, 'find');
+  
   if (!isPublic) {
     // TODO: Add proper authentication check here for non-public access
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
