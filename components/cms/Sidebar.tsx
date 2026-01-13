@@ -148,7 +148,7 @@ export function Sidebar() {
             <div className='p-2 bg-blue-600 rounded-lg shadow-lg shadow-blue-900/20'>
               <Database className='w-5 h-5 text-white' />
             </div>
-            <span>CMS Admin</span>
+            <span>Headless Firebase</span>
           </h1>
         )}
         <button
