@@ -7,7 +7,7 @@ Focus on the initial view and preparing the infrastructure for the new modal sys
 
 - [x] Task: Create unit tests for the enhanced Empty State component. 4ffa465
 - [x] Task: Redesign the "Click 'Add Field' to start" card to occupy full viewport height. 506afc9
-- [ ] Task: Implement basic layout adjustments for `/admin/schema/new` to support full-height content.
+- [x] Task: Implement basic layout adjustments for `/admin/schema/new` to support full-height content. 789d666
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Foundation & Empty State' (Protocol in workflow.md)
 
 ## Phase 2: Full-Screen Field Modal
