@@ -20,16 +20,16 @@ Build the interface for admins to manage public access.
 - [x] Task: Implement save functionality to persist permission changes to Firestore. c0891d8
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Public API Permissions UI'
 
-## Phase 3: Scalar API Documentation
+## Phase 3: Scalar API Documentation [checkpoint: c0f7be0]
 Implement the interactive documentation interface.
 
 - [x] Task: Create unit tests for the OpenAPI specification generator. 628c96c
 - [x] Task: Implement a dynamic OpenAPI spec generator that iterates through existing Firestore collection schemas. c2ea0a3
 - [x] Task: Install `@scalar/api-reference` and create the `/admin/docs` page. c2ea0a3
 - [x] Task: Secure the `/admin/docs` route to ensure it's only accessible to authenticated admin users. c2ea0a3
-- [~] Task: Conductor - User Manual Verification 'Phase 3: Scalar API Documentation'
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Scalar API Documentation'
 
-## Phase 4: Integration & Validation
+## Phase 4: Integration & Validation [checkpoint: c0f7be0]
 Final testing and polishing.
 
 - [x] Task: Create integration tests verifying that public endpoints are correctly allowed/blocked. 53e9052

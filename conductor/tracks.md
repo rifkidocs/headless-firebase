@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [~] Track: API Documentation & Public Access Control
+## [x] Track: API Documentation & Public Access Control
 *Link: [./conductor/tracks/api-docs-perms_20260113/](./conductor/tracks/api-docs-perms_20260113/)*
