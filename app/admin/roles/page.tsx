@@ -248,7 +248,7 @@ export default function RolesPage() {
                         onKeyDown={(e) =>
                           e.key === "Enter" && handleRenameRole(role.id)
                         }
-                        className='px-2 py-1 text-sm border border-gray-300 rounded'
+                        className='px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded'
                         autoFocus
                         onClick={(e) => e.stopPropagation()}
                       />
@@ -298,7 +298,7 @@ export default function RolesPage() {
                       setNewRole({ ...newRole, name: e.target.value })
                     }
                     placeholder='Role name'
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg mb-2'
+                    className='w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg mb-2'
                     autoFocus
                   />
                   <input
@@ -308,7 +308,7 @@ export default function RolesPage() {
                       setNewRole({ ...newRole, description: e.target.value })
                     }
                     placeholder='Description (optional)'
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg mb-3'
+                    className='w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg mb-3'
                   />
                   <div className='flex gap-2'>
                     <button

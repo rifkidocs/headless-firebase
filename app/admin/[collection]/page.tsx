@@ -165,7 +165,7 @@ export default function CollectionListPage({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className='w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+              className='w-full pl-9 pr-4 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
             />
           </div>
         </div>
