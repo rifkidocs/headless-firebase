@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import ApiPermissions from "@/components/cms/ApiPermissions";
 import { Role, CollectionConfig } from "@/lib/types";
 import clsx from "clsx";
 
@@ -50,6 +51,7 @@ export default function RolesPage() {
   const [expandedCollections, setExpandedCollections] = useState<
     Record<string, boolean>
   >({});
+  const [activeTab, setActiveTab] = useState<"roles" | "public">("roles");
 
   useEffect(() => {
     const q = query(collection(db, "_roles"), orderBy("name"));
@@ -206,22 +208,25 @@ export default function RolesPage() {
       </div>
 
       <div className='flex gap-6'>
-        {/* Roles List */}
-        <div className='w-72 shrink-0'>
+        {/* Roles List & Public Access Tab */}
+        <div className='w-72 shrink-0 flex flex-col gap-4'>
           <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
             <div className='p-4 border-b border-gray-200 bg-gray-50/50'>
               <p className='text-xs font-semibold text-gray-500 uppercase tracking-wider'>
-                Roles
+                User Roles
               </p>
             </div>
             <div className='divide-y divide-gray-100'>
               {roles.map((role) => (
                 <div
                   key={role.id}
-                  onClick={() => setSelectedRole(role)}
+                  onClick={() => {
+                    setSelectedRole(role);
+                    setActiveTab("roles");
+                  }}
                   className={clsx(
                     "flex items-center justify-between p-4 cursor-pointer transition-colors group",
-                    selectedRole?.id === role.id
+                    selectedRole?.id === role.id && activeTab === "roles"
                       ? "bg-blue-50"
                       : "hover:bg-gray-50"
                   )}>
@@ -229,7 +234,7 @@ export default function RolesPage() {
                     <Shield
                       className={clsx(
                         "w-5 h-5",
-                        selectedRole?.id === role.id
+                        selectedRole?.id === role.id && activeTab === "roles"
                           ? "text-blue-600"
                           : "text-gray-400"
                       )}
@@ -251,7 +256,7 @@ export default function RolesPage() {
                       <span
                         className={clsx(
                           "font-medium",
-                          selectedRole?.id === role.id
+                          selectedRole?.id === role.id && activeTab === "roles"
                             ? "text-blue-700"
                             : "text-gray-900"
                         )}>
@@ -325,106 +330,133 @@ export default function RolesPage() {
               )}
             </div>
           </div>
+
+          <div
+            onClick={() => setActiveTab("public")}
+            className={clsx(
+              "flex items-center gap-3 p-4 cursor-pointer transition-colors rounded-xl border",
+              activeTab === "public"
+                ? "bg-blue-50 border-blue-200"
+                : "bg-white border-gray-200 hover:bg-gray-50"
+            )}>
+            <Shield
+              className={clsx(
+                "w-5 h-5",
+                activeTab === "public" ? "text-blue-600" : "text-gray-400"
+              )}
+            />
+            <span
+              className={clsx(
+                "font-medium",
+                activeTab === "public" ? "text-blue-700" : "text-gray-900"
+              )}>
+              Public API Access
+            </span>
+          </div>
         </div>
 
         {/* Permissions Panel */}
         <div className='flex-1'>
-          {selectedRole ? (
-            <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
-              <div className='p-6 border-b border-gray-200'>
-                <h2 className='text-lg font-semibold text-gray-900'>
-                  {selectedRole.name}
-                </h2>
-                <p className='text-sm text-gray-500 mt-1'>
-                  {selectedRole.description ||
-                    "Configure permissions for this role"}
+          {activeTab === "roles" ? (
+            selectedRole ? (
+              <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
+                <div className='p-6 border-b border-gray-200'>
+                  <h2 className='text-lg font-semibold text-gray-900'>
+                    {selectedRole.name}
+                  </h2>
+                  <p className='text-sm text-gray-500 mt-1'>
+                    {selectedRole.description ||
+                      "Configure permissions for this role"}
+                  </p>
+                </div>
+
+                <div className='divide-y divide-gray-100'>
+                  {collections.map((col) => {
+                    const isExpanded = expandedCollections[col.slug];
+                    const permissions = selectedRole.permissions[col.slug] || {};
+
+                    return (
+                      <div key={col.slug}>
+                        <button
+                          onClick={() => toggleCollection(col.slug)}
+                          className='w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors'>
+                          <div className='flex items-center gap-3'>
+                            {isExpanded ? (
+                              <ChevronDown className='w-4 h-4 text-gray-400' />
+                            ) : (
+                              <ChevronRight className='w-4 h-4 text-gray-400' />
+                            )}
+                            <span className='font-medium text-gray-900'>
+                              {col.label}
+                            </span>
+                            <span className='text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded'>
+                              {col.slug}
+                            </span>
+                          </div>
+                        </button>
+
+                        {isExpanded && (
+                          <div className='px-6 pb-4 pl-12'>
+                            <div className='grid grid-cols-5 gap-4'>
+                              {[
+                                "create",
+                                "read",
+                                "update",
+                                "delete",
+                                "publish",
+                              ].map((perm) => (
+                                <label
+                                  key={perm}
+                                  className='flex items-center gap-2 cursor-pointer'>
+                                  <input
+                                    type='checkbox'
+                                    checked={
+                                      !!(
+                                        permissions as Record<string, boolean>
+                                      )[perm]
+                                    }
+                                    onChange={(e) =>
+                                      handlePermissionChange(
+                                        selectedRole.id,
+                                        col.slug,
+                                        perm,
+                                        e.target.checked
+                                      )
+                                    }
+                                    className='w-4 h-4 text-blue-600 rounded border-gray-300'
+                                  />
+                                  <span className='text-sm text-gray-700 capitalize'>
+                                    {perm}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {collections.length === 0 && (
+                    <div className='p-12 text-center text-gray-500'>
+                      <p>No content types defined yet.</p>
+                      <p className='text-sm mt-1'>
+                        Create content types to configure permissions.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center'>
+                <Shield className='w-12 h-12 mx-auto mb-3 text-gray-300' />
+                <p className='text-gray-500'>
+                  Select a role to configure permissions
                 </p>
               </div>
-
-              <div className='divide-y divide-gray-100'>
-                {collections.map((col) => {
-                  const isExpanded = expandedCollections[col.slug];
-                  const permissions = selectedRole.permissions[col.slug] || {};
-
-                  return (
-                    <div key={col.slug}>
-                      <button
-                        onClick={() => toggleCollection(col.slug)}
-                        className='w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors'>
-                        <div className='flex items-center gap-3'>
-                          {isExpanded ? (
-                            <ChevronDown className='w-4 h-4 text-gray-400' />
-                          ) : (
-                            <ChevronRight className='w-4 h-4 text-gray-400' />
-                          )}
-                          <span className='font-medium text-gray-900'>
-                            {col.label}
-                          </span>
-                          <span className='text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded'>
-                            {col.slug}
-                          </span>
-                        </div>
-                      </button>
-
-                      {isExpanded && (
-                        <div className='px-6 pb-4 pl-12'>
-                          <div className='grid grid-cols-5 gap-4'>
-                            {[
-                              "create",
-                              "read",
-                              "update",
-                              "delete",
-                              "publish",
-                            ].map((perm) => (
-                              <label
-                                key={perm}
-                                className='flex items-center gap-2 cursor-pointer'>
-                                <input
-                                  type='checkbox'
-                                  checked={
-                                    !!(permissions as Record<string, boolean>)[
-                                      perm
-                                    ]
-                                  }
-                                  onChange={(e) =>
-                                    handlePermissionChange(
-                                      selectedRole.id,
-                                      col.slug,
-                                      perm,
-                                      e.target.checked
-                                    )
-                                  }
-                                  className='w-4 h-4 text-blue-600 rounded border-gray-300'
-                                />
-                                <span className='text-sm text-gray-700 capitalize'>
-                                  {perm}
-                                </span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {collections.length === 0 && (
-                  <div className='p-12 text-center text-gray-500'>
-                    <p>No content types defined yet.</p>
-                    <p className='text-sm mt-1'>
-                      Create content types to configure permissions.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+            )
           ) : (
-            <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center'>
-              <Shield className='w-12 h-12 mx-auto mb-3 text-gray-300' />
-              <p className='text-gray-500'>
-                Select a role to configure permissions
-              </p>
-            </div>
+            <ApiPermissions collections={collections} />
           )}
         </div>
       </div>

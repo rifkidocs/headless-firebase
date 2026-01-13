@@ -7,9 +7,8 @@ import {
   getPublicPermissions,
   updatePublicPermissions,
 } from "@/lib/permissions";
-import { Loader2, Save, ChevronDown, ChevronRight, Shield } from "lucide-react";
+import { Loader2, Save, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "@/components/ui/Toast";
-import clsx from "clsx";
 
 interface ApiPermissionsProps {
   collections: CollectionConfig[];
