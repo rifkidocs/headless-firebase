@@ -8,18 +8,18 @@
     - Implement `constructMetadata` helper to simplify recurring OG/Twitter tags.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Foundation' (Protocol in workflow.md) (4ac7e58)
 
-## Phase 2: Global and Static Page Enhancements
-- [~] Task: Update Root Layout (`app/layout.tsx`) with global SEO fallbacks.
-- [~] Task: Implement metadata for the Home page (`app/page.tsx`).
-- [~] Task: Implement metadata for the Admin Login page (`app/admin/login/page.tsx`).
-- [~] Task: Implement metadata for the Documentation page (`app/docs/page.tsx`).
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Static Pages' (Protocol in workflow.md)
+## Phase 2: Global and Static Page Enhancements [checkpoint: 7c6e4fc]
+- [x] Task: Update Root Layout (`app/layout.tsx`) with global SEO fallbacks. (7c6e4fc)
+- [x] Task: Implement metadata for the Home page (`app/page.tsx`). (7c6e4fc)
+- [x] Task: Implement metadata for the Admin Login page (`app/admin/login/page.tsx`). (7c6e4fc)
+- [x] Task: Implement metadata for the Documentation page (`app/docs/page.tsx`). (7c6e4fc)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Static Pages' (Protocol in workflow.md) (7c6e4fc)
 
-## Phase 3: Dynamic Collection Metadata
-- [~] Task: Implement `generateMetadata` for dynamic collection list pages (`app/admin/[collection]/page.tsx`).
-- [~] Task: Implement `generateMetadata` for dynamic collection entry pages (`app/admin/[collection]/[id]/page.tsx`).
+## Phase 3: Dynamic Collection Metadata [checkpoint: 81d7448]
+- [x] Task: Implement `generateMetadata` for dynamic collection list pages (`app/admin/[collection]/page.tsx`). (81d7448)
+- [x] Task: Implement `generateMetadata` for dynamic collection entry pages (`app/admin/[collection]/[id]/page.tsx`). (81d7448)
     - Logic to fetch entry data and map "Title" and "Description" automatically from fields.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Dynamic Collections' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Dynamic Collections' (Protocol in workflow.md) (81d7448)
 
 ## Phase 4: Final Review & Quality Gates
 - [ ] Task: Verify OG tag rendering using a local metadata inspector or `curl`.
