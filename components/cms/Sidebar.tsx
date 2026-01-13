@@ -177,6 +177,13 @@ export function Sidebar() {
             Dashboard
           </NavItem>
           <NavItem
+            href='/admin/docs'
+            icon={FileText}
+            active={pathname.startsWith("/admin/docs")}
+            collapsed={collapsed}>
+            API Documentation
+          </NavItem>
+          <NavItem
             href='/admin/media'
             icon={Image}
             active={pathname.startsWith("/admin/media")}
