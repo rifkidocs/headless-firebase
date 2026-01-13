@@ -2,19 +2,19 @@
 
 This plan covers the implementation of automated API documentation using Scalar and a granular public access control system for the REST API.
 
-## Phase 1: API Permissions Backend & Infrastructure [checkpoint: 70bf99b]
+## Phase 1: API Permissions Backend & Infrastructure [checkpoint: cd65a9f]
 Focus on the data model and permission checking logic.
 
 - [x] Task: Create unit tests for the Public Permission storage and retrieval. b4fbcb1
 - [x] Task: Extend the `_collections` (or create a dedicated `_permissions`) collection in Firestore to store public access toggles. 535fb6f
 - [x] Task: Implement a centralized middleware or utility function to check public access permissions for a given route and method. 535fb6f
 - [x] Task: Integrate the permission check into the existing API routes (`app/api/...`). 70bf99b
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: API Permissions Backend & Infrastructure' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: API Permissions Backend & Infrastructure'
 
 ## Phase 2: Public API Permissions UI
 Build the interface for admins to manage public access.
 
-- [ ] Task: Create unit tests for the API Permission Matrix UI component.
+- [~] Task: Create unit tests for the API Permission Matrix UI component.
 - [ ] Task: Create a new `ApiPermissions` component that displays the Content Type / CRUD matrix.
 - [ ] Task: Integrate the `ApiPermissions` component into the "Roles & Permissions" (admin/roles) section.
 - [ ] Task: Implement save functionality to persist permission changes to Firestore.
