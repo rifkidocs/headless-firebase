@@ -6,7 +6,7 @@ This plan covers the implementation of automated API documentation using Scalar 
 Focus on the data model and permission checking logic.
 
 - [x] Task: Create unit tests for the Public Permission storage and retrieval. b4fbcb1
-- [ ] Task: Extend the `_collections` (or create a dedicated `_permissions`) collection in Firestore to store public access toggles.
+- [x] Task: Extend the `_collections` (or create a dedicated `_permissions`) collection in Firestore to store public access toggles. 535fb6f
 - [ ] Task: Implement a centralized middleware or utility function to check public access permissions for a given route and method.
 - [ ] Task: Integrate the permission check into the existing API routes (`app/api/v1/...`).
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: API Permissions Backend & Infrastructure' (Protocol in workflow.md)
