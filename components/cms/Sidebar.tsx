@@ -41,10 +41,10 @@ const NavItem = ({
   <Link
     href={href}
     className={clsx(
-      "group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+      "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
       active
-        ? "bg-blue-600 text-white shadow-md shadow-blue-900/20"
-        : "text-gray-400 hover:bg-gray-800 hover:text-white",
+        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+        : "text-gray-500 hover:bg-gray-50 hover:text-gray-900",
       collapsed && "justify-center px-2"
     )}
     title={collapsed ? String(children) : undefined}>
@@ -53,7 +53,7 @@ const NavItem = ({
         "w-5 h-5 shrink-0",
         active
           ? "text-white"
-          : "text-gray-500 group-hover:text-white transition-colors"
+          : "text-gray-400 group-hover:text-blue-600 transition-colors"
       )}
     />
     {!collapsed && (
@@ -72,13 +72,13 @@ interface NavSectionProps {
 }
 
 const NavSection = ({ title, children, collapsed }: NavSectionProps) => (
-  <div className='space-y-1'>
+  <div className='space-y-1.5'>
     {!collapsed && (
-      <p className='px-3 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2'>
+      <p className='px-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3'>
         {title}
       </p>
     )}
-    {collapsed && <div className='h-px bg-gray-800 mx-2 my-2' />}
+    {collapsed && <div className='h-px bg-gray-100 mx-3 my-4' />}
     {children}
   </div>
 );
@@ -134,18 +134,18 @@ export function Sidebar() {
   return (
     <aside
       className={clsx(
-        "bg-[#0F172A] text-white min-h-screen flex flex-col border-r border-gray-800 shadow-xl z-50 transition-all duration-300",
+        "bg-white text-gray-900 min-h-screen flex flex-col border-r border-gray-200 shadow-sm z-50 transition-all duration-300",
         collapsed ? "w-[72px]" : "w-72"
       )}>
       {/* Header */}
       <div
         className={clsx(
-          "p-4 border-b border-gray-800/50 flex items-center",
+          "p-6 flex items-center",
           collapsed ? "justify-center" : "justify-between"
         )}>
         {!collapsed && (
-          <h1 className='text-lg font-bold flex items-center gap-3 text-white tracking-tight'>
-            <div className='p-2 bg-blue-600 rounded-lg shadow-lg shadow-blue-900/20'>
+          <h1 className='text-lg font-bold flex items-center gap-3 text-gray-900 tracking-tight'>
+            <div className='p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20'>
               <Database className='w-5 h-5 text-white' />
             </div>
             <span>Headless Firebase</span>
@@ -154,8 +154,8 @@ export function Sidebar() {
         <button
           onClick={toggleCollapsed}
           className={clsx(
-            "p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors",
-            collapsed && "p-2 bg-gray-800/50"
+            "p-2 rounded-xl text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors",
+            collapsed && "p-2 bg-gray-50"
           )}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           {collapsed ? (
@@ -166,7 +166,7 @@ export function Sidebar() {
         </button>
       </div>
 
-      <nav className='flex-1 px-3 py-6 space-y-6 overflow-y-auto'>
+      <nav className='flex-1 px-4 py-6 space-y-8 overflow-y-auto'>
         {/* Platform Section */}
         <NavSection title='Platform' collapsed={collapsed}>
           <NavItem
@@ -270,15 +270,15 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className='p-3 border-t border-gray-800/50 bg-[#0F172A]'>
+      <div className='p-4 border-t border-gray-100 bg-white'>
         <button
           onClick={handleLogout}
           className={clsx(
-            "flex items-center gap-3 px-3 py-2.5 w-full text-left text-sm font-medium text-gray-400 hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-all duration-200 group",
+            "flex items-center gap-3 px-3 py-2.5 w-full text-left text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200 group",
             collapsed && "justify-center px-2"
           )}
           title={collapsed ? "Sign Out" : undefined}>
-          <LogOut className='w-5 h-5 group-hover:text-red-400 transition-colors shrink-0' />
+          <LogOut className='w-5 h-5 group-hover:text-red-600 transition-colors shrink-0' />
           {!collapsed && <span>Sign Out</span>}
         </button>
       </div>
