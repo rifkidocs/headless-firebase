@@ -24,7 +24,7 @@ Add interactive reordering to the schema field list.
 
 - [x] Task: Create unit tests for the drag-and-drop reordering logic. ad33d01
 - [x] Task: Integrate a drag-and-drop library (e.g., `@dnd-kit` or `react-beautiful-dnd`) into the field list. 38d0593
-- [ ] Task: Implement the UI feedback for dragging (sortable list, drag handles, animations).
+- [x] Task: Implement the UI feedback for dragging (sortable list, drag handles, animations). 3e53e0c
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Drag-and-Drop Reordering' (Protocol in workflow.md)
 
 ## Phase 4: Integration & Polishing
