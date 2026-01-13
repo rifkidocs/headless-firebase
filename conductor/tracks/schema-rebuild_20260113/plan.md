@@ -27,10 +27,10 @@ Add interactive reordering to the schema field list.
 - [x] Task: Implement the UI feedback for dragging (sortable list, drag handles, animations). 3e53e0c
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Drag-and-Drop Reordering' (Protocol in workflow.md)
 
-## Phase 4: Integration & Polishing
+## Phase 4: Integration & Polishing [checkpoint: 433f601]
 Ensure all components work together seamlessly and meet the visual standards.
 
 - [x] Task: Create integration tests for the full "Add -> Reorder -> Edit" flow. 7fad925
 - [x] Task: Connect the new Modal and Reordering logic to the existing schema state management. 38952bb
 - [x] Task: Apply final styling polishes and transitions (Tailwind CSS). ebe5c25
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Integration & Polishing' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Integration & Polishing' (Protocol in workflow.md)
