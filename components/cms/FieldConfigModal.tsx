@@ -166,9 +166,9 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
                                 ))}
                               </select>
                               {components.length === 0 && (
-                                <p className="text-xs text-red-500 mt-1">
+                                <p className="text-xs text-red-600 mt-1">
                                   No components found.{' '}
-                                  <Link href="/admin/components/new" target="_blank" className="underline hover:text-red-600">
+                                  <Link href="/admin/components/new" target="_blank" className="underline hover:text-red-700">
                                     Create one first
                                   </Link>
                                   .
@@ -230,7 +230,7 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
                             </div>
                           </div>
                         ) : (
-                          <p className="text-sm text-gray-400 italic">
+                          <p className="text-sm text-gray-500 italic">
                             Advanced settings for {fieldType} will be implemented in integration phase.
                           </p>
                         )}

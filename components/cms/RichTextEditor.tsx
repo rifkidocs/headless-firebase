@@ -62,13 +62,14 @@ export function RichTextEditor({
       }),
     ],
     content: value,
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm max-w-none focus:outline-none min-h-[200px] px-4 py-3",
+          "prose prose-sm max-w-none focus:outline-none min-h-[200px] px-4 py-3 text-gray-900",
       },
     },
   });
