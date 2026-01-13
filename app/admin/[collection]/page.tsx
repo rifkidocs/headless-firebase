@@ -240,6 +240,27 @@ export default function CollectionListPage({
                           ) : (
                             "-"
                           )
+                        ) : field.type === "richtext" ? (
+                          <span
+                            className='block truncate max-w-[200px]'
+                            title={String(docItem[field.name] || "").replace(
+                              /<[^>]*>?/gm,
+                              ""
+                            )}>
+                            {String(docItem[field.name] || "")
+                              .replace(/<[^>]*>?/gm, "")
+                              .substring(0, 50) || "-"}
+                          </span>
+                        ) : field.type === "component" ? (
+                          <span className='text-xs text-gray-500'>
+                            [Component]
+                          </span>
+                        ) : field.type === "json" ? (
+                          <span className='text-xs text-gray-500'>[JSON]</span>
+                        ) : field.type === "relation" ? (
+                          <span className='text-xs text-gray-500'>
+                            [Relation]
+                          </span>
                         ) : (
                           <span
                             className='block truncate max-w-[200px]'
