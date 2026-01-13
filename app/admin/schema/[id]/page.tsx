@@ -73,6 +73,8 @@ const FIELD_ICONS: Record<FieldType, React.ElementType> = {
   dynamiczone: Layers,
 };
 
+import SchemaEmptyState from "@/components/cms/SchemaEmptyState";
+
 interface SchemaForm {
   label: string;
   slug: string;
@@ -1003,18 +1005,7 @@ export default function SchemaEditorPage({
             })}
 
             {fields.length === 0 && (
-              <div className='text-center py-24 border-2 border-dashed border-gray-200 rounded-lg'>
-                <Settings2 className='w-12 h-12 mx-auto mb-3 text-gray-300' />
-                <p className='text-gray-500 text-sm mb-2'>
-                  No fields added yet.
-                </p>
-                <button
-                  type='button'
-                  onClick={() => setShowFieldPicker(true)}
-                  className='text-blue-600 hover:text-blue-700 text-sm font-medium'>
-                  Click &quot;Add Field&quot; to start
-                </button>
-              </div>
+              <SchemaEmptyState onAddField={() => setShowFieldPicker(true)} />
             )}
           </div>
         </div>

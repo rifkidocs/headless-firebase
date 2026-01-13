@@ -25,6 +25,6 @@ describe('SchemaEmptyState', () => {
     // For now, let's assume we use Tailwind's h-full or min-h-screen or similar logic on the wrapper
     const wrapper = container.firstChild
     expect(wrapper).toHaveClass('h-full')
-    expect(wrapper).toHaveClass('min-h-[50vh]') // Minimum height requirement or similar
+    expect(wrapper).toHaveClass('min-h-[70vh]') // Minimum height requirement or similar
   })
 })
