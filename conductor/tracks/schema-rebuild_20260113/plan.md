@@ -19,13 +19,13 @@ Implement the core "Add Field" experience using a large modal and two-column lay
 - [x] Task: Add auto-focus logic to the "Display Name" input field within the modal. 512a59a
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Full-Screen Field Modal' (Protocol in workflow.md)
 
-## Phase 3: Drag-and-Drop Reordering
+## Phase 3: Drag-and-Drop Reordering [checkpoint: 2e53a4b]
 Add interactive reordering to the schema field list.
 
 - [x] Task: Create unit tests for the drag-and-drop reordering logic. ad33d01
 - [x] Task: Integrate a drag-and-drop library (e.g., `@dnd-kit` or `react-beautiful-dnd`) into the field list. 38d0593
 - [x] Task: Implement the UI feedback for dragging (sortable list, drag handles, animations). 3e53e0c
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Drag-and-Drop Reordering' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Drag-and-Drop Reordering' (Protocol in workflow.md)
 
 ## Phase 4: Integration & Polishing
 Ensure all components work together seamlessly and meet the visual standards.
