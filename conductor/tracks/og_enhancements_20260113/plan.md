@@ -1,12 +1,12 @@
 # Plan: Open Graph (OG) Enhancements
 
-## Phase 1: Foundation & Cloudinary Integration
+## Phase 1: Foundation & Cloudinary Integration [checkpoint: 4ac7e58]
 - [x] Task: Create `lib/og.ts` utility for Cloudinary URL generation. (5e44184)
     - Implement a function `getOgImageUrl(title, subtitle)` that constructs a Cloudinary URL with text overlays.
     - Configure branding overlays (collection name as subtitle).
 - [x] Task: Create `lib/metadata-utils.ts` for centralized Next.js `generateMetadata` logic. (1c6ba1b)
     - Implement `constructMetadata` helper to simplify recurring OG/Twitter tags.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Foundation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Foundation' (Protocol in workflow.md) (4ac7e58)
 
 ## Phase 2: Global and Static Page Enhancements
 - [ ] Task: Update Root Layout (`app/layout.tsx`) with global SEO fallbacks.
