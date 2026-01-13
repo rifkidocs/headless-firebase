@@ -32,7 +32,7 @@ Implement the interactive documentation interface.
 ## Phase 4: Integration & Validation
 Final testing and polishing.
 
-- [ ] Task: Create integration tests verifying that public endpoints are correctly allowed/blocked.
-- [ ] Task: Perform a security audit of the permission check logic.
-- [ ] Task: Apply final UI polishes to the permission matrix.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Integration & Validation' (Protocol in workflow.md)
+- [x] Task: Create integration tests verifying that public endpoints are correctly allowed/blocked. 53e9052
+- [x] Task: Perform a security audit of the permission check logic. 53e9052
+- [x] Task: Apply final UI polishes to the permission matrix. 53e9052
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Integration & Validation'
