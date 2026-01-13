@@ -23,8 +23,8 @@ Build the interface for admins to manage public access.
 ## Phase 3: Scalar API Documentation
 Implement the interactive documentation interface.
 
-- [~] Task: Create unit tests for the OpenAPI specification generator.
-- [ ] Task: Implement a dynamic OpenAPI spec generator that iterates through existing Firestore collection schemas.
+- [x] Task: Create unit tests for the OpenAPI specification generator. 628c96c
+- [~] Task: Implement a dynamic OpenAPI spec generator that iterates through existing Firestore collection schemas.
 - [ ] Task: Install `@scalar/api-reference` and create the `/admin/docs` page.
 - [ ] Task: Secure the `/admin/docs` route to ensure it's only accessible to authenticated admin users.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Scalar API Documentation' (Protocol in workflow.md)
