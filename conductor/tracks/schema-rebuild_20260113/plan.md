@@ -2,13 +2,13 @@
 
 This plan covers the rebuilding of the schema creation and editing interface to improve space, visibility, and overall UX, as defined in `spec.md`.
 
-## Phase 1: Foundation & Empty State
+## Phase 1: Foundation & Empty State [checkpoint: c05244e]
 Focus on the initial view and preparing the infrastructure for the new modal system.
 
 - [x] Task: Create unit tests for the enhanced Empty State component. 4ffa465
 - [x] Task: Redesign the "Click 'Add Field' to start" card to occupy full viewport height. 506afc9
 - [x] Task: Implement basic layout adjustments for `/admin/schema/new` to support full-height content. 789d666
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Foundation & Empty State' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Foundation & Empty State' (Protocol in workflow.md)
 
 ## Phase 2: Full-Screen Field Modal
 Implement the core "Add Field" experience using a large modal and two-column layout.
