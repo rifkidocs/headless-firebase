@@ -16,6 +16,7 @@
 - **Cloudinary:** Primary service for media management, providing optimized image and video delivery.
 - **Tiptap:** Headless rich text editor for content creation.
 - **Scalar:** Interactive API documentation generator and renderer.
+- **@vercel/og (Satori):** Dynamic Open Graph image generation using HTML/CSS.
 
 ## UI & UX
 - **Tailwind CSS:** Utility-first CSS framework for efficient styling.
