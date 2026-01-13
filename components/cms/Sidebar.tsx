@@ -134,7 +134,7 @@ export function Sidebar() {
   return (
     <aside
       className={clsx(
-        "bg-white text-gray-900 min-h-screen flex flex-col border-r border-gray-200 shadow-sm z-50 transition-all duration-300",
+        "hidden md:flex bg-white text-gray-900 min-h-screen flex-col border-r border-gray-200 shadow-sm z-50 transition-all duration-300",
         collapsed ? "w-[72px]" : "w-72"
       )}>
       {/* Header */}

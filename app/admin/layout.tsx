@@ -3,7 +3,9 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sidebar } from "@/components/cms/Sidebar";
+import { MobileNavbar } from "@/components/cms/MobileNavbar";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useState } from "react";
 
 export default function AdminLayout({
   children,
@@ -13,6 +15,7 @@ export default function AdminLayout({
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user && pathname !== "/admin/login") {
@@ -43,8 +46,20 @@ export default function AdminLayout({
 
   return (
     <div className='flex min-h-screen bg-gray-50'>
-      <Sidebar />
-      <main className='flex-1 p-8 overflow-auto'>{children}</main>
+      {/* Desktop Sidebar */}
+      <div className='hidden md:flex'>
+        <Sidebar />
+      </div>
+
+      <div className='flex-1 flex flex-col min-w-0'>
+        {/* Mobile Navbar */}
+        <MobileNavbar onOpenMenu={() => setIsMobileMenuOpen(true)} />
+
+        {/* Main Content */}
+        <main className='flex-1 p-4 md:p-8 overflow-auto mt-16 md:mt-0'>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
