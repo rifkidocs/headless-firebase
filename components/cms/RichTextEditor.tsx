@@ -25,6 +25,7 @@ import {
   Code2,
 } from "lucide-react";
 import clsx from "clsx";
+import { useEffect, useState } from "react";
 
 interface RichTextEditorProps {
   value: string;
@@ -39,6 +40,12 @@ export function RichTextEditor({
   placeholder,
   className,
 }: RichTextEditorProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -74,8 +81,16 @@ export function RichTextEditor({
     },
   });
 
-  if (!editor) {
-    return null;
+  if (!isMounted || !editor) {
+    return (
+      <div
+        className={clsx(
+          "border border-gray-300 rounded-lg overflow-hidden h-[250px] bg-gray-50 flex items-center justify-center text-gray-400 text-sm",
+          className
+        )}>
+        Loading editor...
+      </div>
+    );
   }
 
   const addLink = () => {

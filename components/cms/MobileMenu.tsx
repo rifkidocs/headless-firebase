@@ -107,9 +107,9 @@ export function MobileMenu({ open, onOpenChange }: MobileMenuProps) {
                     <div className='p-2 bg-blue-600 rounded-xl'>
                       <Database className='w-5 h-5 text-white' />
                     </div>
-                    <span className='font-bold text-gray-900 text-lg'>
+                    <Dialog.Title className='font-bold text-gray-900 text-lg'>
                       Headless Firebase
-                    </span>
+                    </Dialog.Title>
                   </div>
                   <Dialog.Close asChild>
                     <button className='p-2 rounded-xl text-gray-400 active:bg-gray-100'>
