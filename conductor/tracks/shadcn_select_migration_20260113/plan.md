@@ -1,10 +1,9 @@
 # Plan: Shadcn/UI Select & Combobox Migration
 
-## Phase 1: Component Installation & Setup
+## Phase 1: Component Installation & Setup [checkpoint: fdcebe1]
 - [x] Task: Install shadcn/ui dependencies. (15856)
-- [~] Task: Create `components/ui/Combobox.tsx` wrapper.
-    - Implement a reusable Combobox component using Popover and Command primitives for easier integration.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Setup' (Protocol in workflow.md)
+- [x] Task: Create `components/ui/Combobox.tsx` wrapper. (fdcebe1)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Setup' (Protocol in workflow.md) (fdcebe1)
 
 ## Phase 2: Core Form Component Migration
 - [ ] Task: Update `CollectionFormContent.tsx` to use Shadcn Select.
