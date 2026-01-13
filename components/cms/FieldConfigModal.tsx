@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, Save } from 'lucide-react'
+import { X, Save, Component, Layers } from 'lucide-react'
 import { Field, FieldType, FIELD_TYPE_CONFIG } from '@/lib/types'
 import { useForm, Controller } from 'react-hook-form'
 import clsx from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 
 interface FieldConfigModalProps {
   isOpen: boolean
@@ -50,9 +51,8 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
   const generateKey = (label: string) => {
     return label
       .toLowerCase()
-      .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .replace(/^(.)/, (c) => c.toLowerCase());
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '');
   };
 
   return (
@@ -96,7 +96,7 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                       {/* Basic Settings */}
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Display Label</label>
+                        <label className="block text-sm font-semibold text-gray-900 mb-2">Display Label</label>
                         <input
                           {...register('label', {
                             required: 'Label is required',
@@ -108,27 +108,27 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
                             }
                           })}
                           autoFocus
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 placeholder:text-gray-400"
                           placeholder="e.g. Article Title"
                         />
                         {errors.label && <p className="text-red-500 text-xs mt-1">{errors.label.message}</p>}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Field Key (API ID)</label>
+                        <label className="block text-sm font-semibold text-gray-900 mb-2">Field Key (API ID)</label>
                         <input
                           {...register('name', { required: 'Key is required' })}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono"
-                          placeholder="camelCase"
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-gray-900 placeholder:text-gray-400"
+                          placeholder="field_key"
                         />
                         {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
                       </div>
 
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                        <label className="block text-sm font-semibold text-gray-900 mb-2">Description</label>
                         <input
                           {...register('description')}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 placeholder:text-gray-400"
                           placeholder="Help text for editors"
                         />
                       </div>
@@ -137,21 +137,103 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
                       <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
                         <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-lg transition-colors">
                           <input type="checkbox" {...register('required')} className="w-4 h-4 text-blue-600 rounded border-gray-300" />
-                          <span className="text-sm font-medium text-gray-700">Required Field</span>
+                          <span className="text-sm font-medium text-gray-900">Required Field</span>
                         </label>
                         <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-lg transition-colors">
                           <input type="checkbox" {...register('unique')} className="w-4 h-4 text-blue-600 rounded border-gray-300" />
-                          <span className="text-sm font-medium text-gray-700">Unique Value</span>
+                          <span className="text-sm font-medium text-gray-900">Unique Value</span>
                         </label>
                         <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded-lg transition-colors">
                           <input type="checkbox" {...register('private')} className="w-4 h-4 text-blue-600 rounded border-gray-300" />
-                          <span className="text-sm font-medium text-gray-700">Private (API Hide)</span>
+                          <span className="text-sm font-medium text-gray-900">Private (API Hide)</span>
                         </label>
                       </div>
 
-                      {/* Type Specific - Placeholder for now */}
+                      {/* Type Specific */}
                       <div className="md:col-span-2 border-t border-gray-100 pt-6">
-                        <p className="text-sm text-gray-400 italic">Advanced settings for {fieldType} will be implemented in integration phase.</p>
+                        {fieldType === 'component' ? (
+                          <div className="flex flex-col gap-6">
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-900 mb-2">Select Component</label>
+                              <select
+                                {...register('component.component', { required: 'Component is required' })}
+                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 bg-white"
+                              >
+                                {components.map((comp) => (
+                                  <option key={comp.id} value={comp.id}>
+                                    {comp.displayName}
+                                  </option>
+                                ))}
+                              </select>
+                              {components.length === 0 && (
+                                <p className="text-xs text-red-500 mt-1">
+                                  No components found.{' '}
+                                  <Link href="/admin/components/new" target="_blank" className="underline hover:text-red-600">
+                                    Create one first
+                                  </Link>
+                                  .
+                                </p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-900 mb-2">Component Type</label>
+                              <div className="flex gap-4">
+                                <label
+                                  className={clsx(
+                                    "flex-1 p-4 border rounded-xl cursor-pointer transition-all flex items-center gap-4",
+                                    !watch('component.repeatable')
+                                      ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                                      : "border-gray-200 hover:border-gray-300"
+                                  )}
+                                >
+                                  <input
+                                    type="radio"
+                                    value="single"
+                                    className="sr-only"
+                                    onChange={() => setValue('component.repeatable', false)}
+                                    checked={!watch('component.repeatable')}
+                                  />
+                                  <div className="p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+                                    <Component className="w-5 h-5 text-gray-600" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-bold text-gray-900">Single Component</p>
+                                    <p className="text-xs text-gray-500 mt-0.5">Fixed structure (e.g. SEO, Header)</p>
+                                  </div>
+                                </label>
+
+                                <label
+                                  className={clsx(
+                                    "flex-1 p-4 border rounded-xl cursor-pointer transition-all flex items-center gap-4",
+                                    watch('component.repeatable')
+                                      ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                                      : "border-gray-200 hover:border-gray-300"
+                                  )}
+                                >
+                                  <input
+                                    type="radio"
+                                    value="repeatable"
+                                    className="sr-only"
+                                    onChange={() => setValue('component.repeatable', true)}
+                                    checked={watch('component.repeatable')}
+                                  />
+                                  <div className="p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+                                    <Layers className="w-5 h-5 text-gray-600" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-bold text-gray-900">Repeatable Component</p>
+                                    <p className="text-xs text-gray-500 mt-0.5">List of items (e.g. Slider, FAQ)</p>
+                                  </div>
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-400 italic">
+                            Advanced settings for {fieldType} will be implemented in integration phase.
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
