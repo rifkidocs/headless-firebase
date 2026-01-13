@@ -11,7 +11,7 @@ This phase focuses on updating the application name and modernizing the desktop 
 This phase focuses on creating the new top navbar for mobile devices, including the hamburger menu and responsive logic.
 
 - [x] Task: Component - Create `MobileNavbar.tsx` with hamburger menu and branding (68aa003)
-- [ ] Task: Integration - Implement responsive visibility in `AdminLayout.tsx` (Hide Sidebar on mobile, show Navbar)
+- [x] Task: Integration - Implement responsive visibility in `AdminLayout.tsx` (Hide Sidebar on mobile, show Navbar) (dd8bf91)
 - [ ] Task: Component - Implement slide-over mobile menu for navigation links
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Mobile Navbar Development' (Protocol in workflow.md)
 
