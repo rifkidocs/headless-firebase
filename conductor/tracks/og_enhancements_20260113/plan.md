@@ -4,7 +4,7 @@
 - [x] Task: Create `lib/og.ts` utility for Cloudinary URL generation. (5e44184)
     - Implement a function `getOgImageUrl(title, subtitle)` that constructs a Cloudinary URL with text overlays.
     - Configure branding overlays (collection name as subtitle).
-- [ ] Task: Create `lib/metadata-utils.ts` for centralized Next.js `generateMetadata` logic.
+- [x] Task: Create `lib/metadata-utils.ts` for centralized Next.js `generateMetadata` logic. (1c6ba1b)
     - Implement `constructMetadata` helper to simplify recurring OG/Twitter tags.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Foundation' (Protocol in workflow.md)
 
