@@ -76,6 +76,24 @@ const FIELD_ICONS: Record<FieldType, React.ElementType> = {
 import SchemaEmptyState from "@/components/cms/SchemaEmptyState";
 import FieldModal from "@/components/cms/FieldModal";
 
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { reorder } from "@/lib/utils";
+import { SortableField } from "@/components/cms/SortableField";
+
 interface SchemaForm {
   label: string;
   slug: string;
@@ -127,10 +145,27 @@ export default function SchemaEditorPage({
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, move } = useFieldArray({
     control,
     name: "fields",
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = fields.findIndex((f) => f.id === active.id);
+      const newIndex = fields.findIndex((f) => f.id === over.id);
+      move(oldIndex, newIndex);
+    }
+  };
 
   // Fetch collections for relation fields
   useEffect(() => {
@@ -524,448 +559,442 @@ export default function SchemaEditorPage({
           </div>
 
           <div className='p-6 space-y-3'>
-            {fields.map((field, index) => {
-              const Icon = FIELD_ICONS[field.type as FieldType] || Settings2;
-              const config = FIELD_TYPE_CONFIG[field.type as FieldType];
-              const isExpanded = expandedFields[index.toString()];
-
-              return (
-                <div
-                  key={field.id}
-                  className='group relative bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all overflow-hidden'>
-                  {/* Field Header */}
-                  <div
-                    className='flex items-center gap-3 p-4 cursor-pointer'
-                    onClick={() => toggleFieldExpand(index.toString())}>
-                    <div className='text-gray-400 cursor-grab active:cursor-grabbing'>
-                      <GripVertical className='w-5 h-5' />
-                    </div>
-                    <div className='p-2 rounded-lg bg-gray-100'>
-                      <Icon className='w-4 h-4 text-gray-600' />
-                    </div>
-                    <div className='flex-1 min-w-0'>
-                      <div className='flex items-center gap-2'>
-                        <span className='font-medium text-gray-900'>
-                          {watch(`fields.${index}.label`) || "Untitled Field"}
-                        </span>
-                        {watch(`fields.${index}.required`) && (
-                          <span className='text-xs text-red-500'>*</span>
-                        )}
-                      </div>
-                      <p className='text-xs text-gray-500'>
-                        {config?.label || field.type} •{" "}
-                        {watch(`fields.${index}.name`) || "no-key"}
-                      </p>
-                    </div>
-                    <button
-                      type='button'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        remove(index);
-                      }}
-                      className='p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100'>
-                      <Trash2 className='w-4 h-4' />
-                    </button>
-                    <ChevronDown
-                      className={clsx(
-                        "w-5 h-5 text-gray-400 transition-transform",
-                        isExpanded && "rotate-180"
-                      )}
-                    />
-                  </div>
-
-                  {/* Field Settings */}
-                  {isExpanded && (
-                    <div className='border-t border-gray-200 p-4 bg-gray-50/50 space-y-4'>
-                      <div className='grid grid-cols-2 gap-4'>
-                        <div>
-                          <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
-                            Label
-                          </label>
-                          <input
-                            {...register(`fields.${index}.label` as const, {
-                              required: true,
-                              onChange: (e) => {
-                                if (!manuallyEditedKeys[field.id]) {
-                                  setValue(
-                                    `fields.${index}.name`,
-                                    generateKey(e.target.value)
-                                  );
-                                }
-                              },
-                            })}
-                            className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-400'
-                            placeholder='e.g. Article Title'
-                          />
-                        </div>
-                        <div>
-                          <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
-                            Field Key
-                          </label>
-                          <input
-                            {...register(`fields.${index}.name` as const, {
-                              required: true,
-                              onChange: () => {
-                                setManuallyEditedKeys((prev) => ({
-                                  ...prev,
-                                  [field.id]: true,
-                                }));
-                              },
-                            })}
-                            className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-mono text-gray-900 placeholder:text-gray-400'
-                            placeholder='camelCase'
-                          />
-                        </div>
-                      </div>
-
-                      {/* Options row */}
-                      <div className='flex flex-wrap gap-4'>
-                        <label className='flex items-center gap-2 cursor-pointer'>
-                          <input
-                            type='checkbox'
-                            {...register(`fields.${index}.required` as const)}
-                            className='w-4 h-4 text-blue-600 rounded border-gray-300'
-                          />
-                          <span className='text-sm text-gray-700'>
-                            Required
-                          </span>
-                        </label>
-                        <label className='flex items-center gap-2 cursor-pointer'>
-                          <input
-                            type='checkbox'
-                            {...register(`fields.${index}.unique` as const)}
-                            className='w-4 h-4 text-blue-600 rounded border-gray-300'
-                          />
-                          <span className='text-sm text-gray-700'>Unique</span>
-                        </label>
-                        <label className='flex items-center gap-2 cursor-pointer'>
-                          <input
-                            type='checkbox'
-                            {...register(`fields.${index}.private` as const)}
-                            className='w-4 h-4 text-blue-600 rounded border-gray-300'
-                          />
-                          <span className='text-sm text-gray-700'>
-                            Private (hide in API)
-                          </span>
-                        </label>
-                      </div>
-
-                      {/* Type-specific settings */}
-                      {(field.type === "text" || field.type === "textarea") && (
-                        <div className='grid grid-cols-2 gap-4'>
-                          <div>
-                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
-                              Min Length
-                            </label>
-                            <input
-                              type='number'
-                              {...register(
-                                `fields.${index}.minLength` as const,
-                                { valueAsNumber: true }
-                              )}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
-                              placeholder='0'
-                            />
-                          </div>
-                          <div>
-                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
-                              Max Length
-                            </label>
-                            <input
-                              type='number'
-                              {...register(
-                                `fields.${index}.maxLength` as const,
-                                { valueAsNumber: true }
-                              )}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
-                              placeholder='Unlimited'
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {(field.type === "number" ||
-                        field.type === "decimal") && (
-                        <div className='grid grid-cols-2 gap-4'>
-                          <div>
-                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
-                              Minimum
-                            </label>
-                            <input
-                              type='number'
-                              {...register(`fields.${index}.min` as const, {
-                                valueAsNumber: true,
-                              })}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
-                            />
-                          </div>
-                          <div>
-                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
-                              Maximum
-                            </label>
-                            <input
-                              type='number'
-                              {...register(`fields.${index}.max` as const, {
-                                valueAsNumber: true,
-                              })}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {field.type === "enumeration" && (
-                        <div>
-                          <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2'>
-                            Options
-                          </label>
-                          <Controller
-                            name={`fields.${index}.enumOptions`}
-                            control={control}
-                            render={({ field: enumField }) => (
-                              <div className='space-y-2'>
-                                {(enumField.value || []).map(
-                                  (option, optIndex) => (
-                                    <div key={optIndex} className='flex gap-2'>
-                                      <input
-                                        value={option.label}
-                                        onChange={(e) => {
-                                          const newOptions = [
-                                            ...(enumField.value || []),
-                                          ];
-                                          newOptions[optIndex] = {
-                                            ...newOptions[optIndex],
-                                            label: e.target.value,
-                                            value: e.target.value
-                                              .toLowerCase()
-                                              .replace(/\s+/g, "_"),
-                                          };
-                                          enumField.onChange(newOptions);
-                                        }}
-                                        className='flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
-                                        placeholder='Option label'
-                                      />
-                                      <button
-                                        type='button'
-                                        onClick={() => {
-                                          const newOptions = (
-                                            enumField.value || []
-                                          ).filter((_, i) => i !== optIndex);
-                                          enumField.onChange(newOptions);
-                                        }}
-                                        className='p-2 text-gray-400 hover:text-red-500'>
-                                        <Trash2 className='w-4 h-4' />
-                                      </button>
-                                    </div>
-                                  )
-                                )}
-                                <button
-                                  type='button'
-                                  onClick={() => {
-                                    enumField.onChange([
-                                      ...(enumField.value || []),
-                                      { label: "", value: "" },
-                                    ]);
-                                  }}
-                                  className='text-sm text-blue-600 hover:text-blue-700 font-medium'>
-                                  + Add option
-                                </button>
-                              </div>
-                            )}
-                          />
-                        </div>
-                      )}
-
-                      {field.type === "relation" && (
-                        <div className='grid grid-cols-2 gap-4'>
-                          <div>
-                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
-                              Relation Type
-                            </label>
-                            <select
-                              {...register(
-                                `fields.${index}.relation.type` as const
-                              )}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'>
-                              <option value='hasOne'>Has One</option>
-                              <option value='hasMany'>Has Many</option>
-                              <option value='belongsTo'>Belongs To</option>
-                              <option value='manyToMany'>Many to Many</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
-                              Related To
-                            </label>
-                            <select
-                              {...register(
-                                `fields.${index}.relation.target` as const
-                              )}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'>
-                              {collections.map((col) => (
-                                <option key={col.slug} value={col.slug}>
-                                  {col.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                      )}
-
-                      {field.type === "component" && (
-                        <div className='flex flex-col gap-4'>
-                          <div>
-                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
-                              Component
-                            </label>
-                            <select
-                              {...register(
-                                `fields.${index}.component.component` as const
-                              )}
-                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'>
-                              {components.map((comp) => (
-                                <option key={comp.id} value={comp.id}>
-                                  {comp.displayName}
-                                </option>
-                              ))}
-                            </select>
-                            {components.length === 0 && (
-                              <p className='text-xs text-red-500 mt-1'>
-                                No components found.{" "}
-                                <Link
-                                  href='/admin/components/new'
-                                  target='_blank'
-                                  className='underline hover:text-red-600'>
-                                  Create one first
-                                </Link>
-                                .
-                              </p>
-                            )}
-                          </div>
-
-                          <div>
-                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
-                              Type
-                            </label>
-                            <div className='flex gap-4'>
-                              <label
-                                className={`flex-1 p-3 border rounded-lg cursor-pointer transition-all ${
-                                  !watch(`fields.${index}.component.repeatable`)
-                                    ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
-                                    : "border-gray-200 hover:border-gray-300"
-                                }`}>
-                                <div className='flex items-center gap-3'>
-                                  <input
-                                    type='radio'
-                                    value='single'
-                                    className='sr-only'
-                                    onChange={() =>
-                                      setValue(
-                                        `fields.${index}.component.repeatable`,
-                                        false
-                                      )
-                                    }
-                                    checked={
-                                      !watch(
-                                        `fields.${index}.component.repeatable`
-                                      )
-                                    }
-                                  />
-                                  <div className='p-2 bg-white rounded-md border border-gray-200'>
-                                    <Component className='w-4 h-4 text-gray-600' />
-                                  </div>
-                                  <div>
-                                    <p className='text-sm font-medium text-gray-900'>
-                                      Single component
-                                    </p>
-                                    <p className='text-xs text-gray-500'>
-                                      Best for fixed structures like SEO, Header
-                                    </p>
-                                  </div>
-                                </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}>
+              <SortableContext
+                items={fields.map((f) => f.id)}
+                strategy={verticalListSortingStrategy}>
+                {fields.map((field, index) => {
+                  const Icon =
+                    FIELD_ICONS[field.type as FieldType] || Settings2;
+                  return (
+                    <SortableField
+                      key={field.id}
+                      id={field.id}
+                      index={index}
+                      field={field}
+                      isExpanded={expandedFields[field.id]}
+                      onToggleExpand={(id) =>
+                        setExpandedFields((prev) => ({
+                          ...prev,
+                          [id]: !prev[id],
+                        }))
+                      }
+                      onRemove={remove}
+                      Icon={Icon}
+                      renderSettings={(idx) => (
+                        <div className='space-y-4'>
+                          <div className='grid grid-cols-2 gap-4'>
+                            <div>
+                              <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                                Label
                               </label>
-
-                              <label
-                                className={`flex-1 p-3 border rounded-lg cursor-pointer transition-all ${
-                                  watch(`fields.${index}.component.repeatable`)
-                                    ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
-                                    : "border-gray-200 hover:border-gray-300"
-                                }`}>
-                                <div className='flex items-center gap-3'>
-                                  <input
-                                    type='radio'
-                                    value='repeatable'
-                                    className='sr-only'
-                                    onChange={() =>
+                              <input
+                                {...register(`fields.${idx}.label` as const, {
+                                  required: true,
+                                  onChange: (e) => {
+                                    if (!manuallyEditedKeys[field.id]) {
                                       setValue(
-                                        `fields.${index}.component.repeatable`,
-                                        true
-                                      )
+                                        `fields.${idx}.name`,
+                                        generateKey(e.target.value)
+                                      );
                                     }
-                                    checked={watch(
-                                      `fields.${index}.component.repeatable`
-                                    )}
-                                  />
-                                  <div className='p-2 bg-white rounded-md border border-gray-200'>
-                                    <Layers className='w-4 h-4 text-gray-600' />
-                                  </div>
-                                  <div>
-                                    <p className='text-sm font-medium text-gray-900'>
-                                      Repeatable component
-                                    </p>
-                                    <p className='text-xs text-gray-500'>
-                                      Best for lists like Slider, Testimonials
-                                    </p>
-                                  </div>
-                                </div>
+                                  },
+                                })}
+                                className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-400'
+                                placeholder='e.g. Article Title'
+                              />
+                            </div>
+                            <div>
+                              <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                                Field Key
                               </label>
+                              <input
+                                {...register(`fields.${idx}.name` as const, {
+                                  required: true,
+                                  onChange: () => {
+                                    setManuallyEditedKeys((prev) => ({
+                                      ...prev,
+                                      [field.id]: true,
+                                    }));
+                                  },
+                                })}
+                                className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-mono text-gray-900 placeholder:text-gray-400'
+                                placeholder='camelCase'
+                              />
                             </div>
                           </div>
+
+                          {/* Options row */}
+                          <div className='flex flex-wrap gap-4'>
+                            <label className='flex items-center gap-2 cursor-pointer'>
+                              <input
+                                type='checkbox'
+                                {...register(`fields.${idx}.required` as const)}
+                                className='w-4 h-4 text-blue-600 rounded border-gray-300'
+                              />
+                              <span className='text-sm text-gray-700'>
+                                Required
+                              </span>
+                            </label>
+                            <label className='flex items-center gap-2 cursor-pointer'>
+                              <input
+                                type='checkbox'
+                                {...register(`fields.${idx}.unique` as const)}
+                                className='w-4 h-4 text-blue-600 rounded border-gray-300'
+                              />
+                              <span className='text-sm text-gray-700'>
+                                Unique
+                              </span>
+                            </label>
+                            <label className='flex items-center gap-2 cursor-pointer'>
+                              <input
+                                type='checkbox'
+                                {...register(`fields.${idx}.private` as const)}
+                                className='w-4 h-4 text-blue-600 rounded border-gray-300'
+                              />
+                              <span className='text-sm text-gray-700'>
+                                Private (hide in API)
+                              </span>
+                            </label>
+                          </div>
+
+                          {/* Type-specific settings */}
+                          {(field.type === "text" ||
+                            field.type === "textarea") && (
+                            <div className='grid grid-cols-2 gap-4'>
+                              <div>
+                                <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                                  Min Length
+                                </label>
+                                <input
+                                  type='number'
+                                  {...register(
+                                    `fields.${idx}.minLength` as const,
+                                    { valueAsNumber: true }
+                                  )}
+                                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
+                                  placeholder='0'
+                                />
+                              </div>
+                              <div>
+                                <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                                  Max Length
+                                </label>
+                                <input
+                                  type='number'
+                                  {...register(
+                                    `fields.${idx}.maxLength` as const,
+                                    { valueAsNumber: true }
+                                  )}
+                                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
+                                  placeholder='Unlimited'
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {(field.type === "number" ||
+                            field.type === "decimal") && (
+                            <div className='grid grid-cols-2 gap-4'>
+                              <div>
+                                <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                                  Minimum
+                                </label>
+                                <input
+                                  type='number'
+                                  {...register(`fields.${idx}.min` as const, {
+                                    valueAsNumber: true,
+                                  })}
+                                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
+                                />
+                              </div>
+                              <div>
+                                <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                                  Maximum
+                                </label>
+                                <input
+                                  type='number'
+                                  {...register(`fields.${idx}.max` as const, {
+                                    valueAsNumber: true,
+                                  })}
+                                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {field.type === "enumeration" && (
+                            <div>
+                              <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2'>
+                                Options
+                              </label>
+                              <Controller
+                                name={`fields.${idx}.enumOptions`}
+                                control={control}
+                                render={({ field: enumField }) => (
+                                  <div className='space-y-2'>
+                                    {(enumField.value || []).map(
+                                      (option, optIndex) => (
+                                        <div
+                                          key={optIndex}
+                                          className='flex gap-2'>
+                                          <input
+                                            value={option.label}
+                                            onChange={(e) => {
+                                              const newOptions = [
+                                                ...(enumField.value || []),
+                                              ];
+                                              newOptions[optIndex] = {
+                                                ...newOptions[optIndex],
+                                                label: e.target.value,
+                                                value: e.target.value
+                                                  .toLowerCase()
+                                                  .replace(/\s+/g, "_"),
+                                              };
+                                              enumField.onChange(newOptions);
+                                            }}
+                                            className='flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
+                                            placeholder='Option label'
+                                          />
+                                          <button
+                                            type='button'
+                                            onClick={() => {
+                                              const newOptions = (
+                                                enumField.value || []
+                                              ).filter(
+                                                (_, i) => i !== optIndex
+                                              );
+                                              enumField.onChange(newOptions);
+                                            }}
+                                            className='p-2 text-gray-400 hover:text-red-500'>
+                                            <Trash2 className='w-4 h-4' />
+                                          </button>
+                                        </div>
+                                      )
+                                    )}
+                                    <button
+                                      type='button'
+                                      onClick={() => {
+                                        enumField.onChange([
+                                          ...(enumField.value || []),
+                                          { label: "", value: "" },
+                                        ]);
+                                      }}
+                                      className='text-sm text-blue-600 hover:text-blue-700 font-medium'>
+                                      + Add option
+                                    </button>
+                                  </div>
+                                )}
+                              />
+                            </div>
+                          )}
+
+                          {field.type === "relation" && (
+                            <div className='grid grid-cols-2 gap-4'>
+                              <div>
+                                <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                                  Relation Type
+                                </label>
+                                <select
+                                  {...register(
+                                    `fields.${idx}.relation.type` as const
+                                  )}
+                                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'>
+                                  <option value='hasOne'>Has One</option>
+                                  <option value='hasMany'>Has Many</option>
+                                  <option value='belongsTo'>Belongs To</option>
+                                  <option value='manyToMany'>
+                                    Many to Many
+                                  </option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                                  Related To
+                                </label>
+                                <select
+                                  {...register(
+                                    `fields.${idx}.relation.target` as const
+                                  )}
+                                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'>
+                                  {collections.map((col) => (
+                                    <option key={col.slug} value={col.slug}>
+                                      {col.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                          )}
+
+                          {field.type === "component" && (
+                            <div className='flex flex-col gap-4'>
+                              <div>
+                                <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                                  Component
+                                </label>
+                                <select
+                                  {...register(
+                                    `fields.${idx}.component.component` as const
+                                  )}
+                                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'>
+                                  {components.map((comp) => (
+                                    <option key={comp.id} value={comp.id}>
+                                      {comp.displayName}
+                                    </option>
+                                  ))}
+                                </select>
+                                {components.length === 0 && (
+                                  <p className='text-xs text-red-500 mt-1'>
+                                    No components found.{" "}
+                                    <Link
+                                      href='/admin/components/new'
+                                      target='_blank'
+                                      className='underline hover:text-red-600'>
+                                      Create one first
+                                    </Link>
+                                    .
+                                  </p>
+                                )}
+                              </div>
+
+                              <div>
+                                <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                                  Type
+                                </label>
+                                <div className='flex gap-4'>
+                                  <label
+                                    className={`flex-1 p-3 border rounded-lg cursor-pointer transition-all ${
+                                      !watch(
+                                        `fields.${idx}.component.repeatable`
+                                      )
+                                        ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                                        : "border-gray-200 hover:border-gray-300"
+                                    }`}>
+                                    <div className='flex items-center gap-3'>
+                                      <input
+                                        type='radio'
+                                        value='single'
+                                        className='sr-only'
+                                        onChange={() =>
+                                          setValue(
+                                            `fields.${idx}.component.repeatable`,
+                                            false
+                                          )
+                                        }
+                                        checked={
+                                          !watch(
+                                            `fields.${idx}.component.repeatable`
+                                          )
+                                        }
+                                      />
+                                      <div className='p-2 bg-white rounded-md border border-gray-200'>
+                                        <Component className='w-4 h-4 text-gray-600' />
+                                      </div>
+                                      <div>
+                                        <p className='text-sm font-medium text-gray-900'>
+                                          Single component
+                                        </p>
+                                        <p className='text-xs text-gray-500'>
+                                          Best for fixed structures like SEO,
+                                          Header
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </label>
+
+                                  <label
+                                    className={`flex-1 p-3 border rounded-lg cursor-pointer transition-all ${
+                                      watch(
+                                        `fields.${idx}.component.repeatable`
+                                      )
+                                        ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                                        : "border-gray-200 hover:border-gray-300"
+                                    }`}>
+                                    <div className='flex items-center gap-3'>
+                                      <input
+                                        type='radio'
+                                        value='repeatable'
+                                        className='sr-only'
+                                        onChange={() =>
+                                          setValue(
+                                            `fields.${idx}.component.repeatable`,
+                                            true
+                                          )
+                                        }
+                                        checked={watch(
+                                          `fields.${idx}.component.repeatable`
+                                        )}
+                                      />
+                                      <div className='p-2 bg-white rounded-md border border-gray-200'>
+                                        <Layers className='w-4 h-4 text-gray-600' />
+                                      </div>
+                                      <div>
+                                        <p className='text-sm font-medium text-gray-900'>
+                                          Repeatable component
+                                        </p>
+                                        <p className='text-xs text-gray-500'>
+                                          Best for lists like Slider,
+                                          Testimonials
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {field.type === "uid" && (
+                            <div>
+                              <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                                Generate from field
+                              </label>
+                              <select
+                                {...register(
+                                  `fields.${idx}.targetField` as const
+                                )}
+                                className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'>
+                                <option value=''>Select a field</option>
+                                {fields
+                                  .filter((f) => f.type === "text" && f.name)
+                                  .map((f) => (
+                                    <option key={f.name} value={f.name}>
+                                      {f.label || f.name}
+                                    </option>
+                                  ))}
+                              </select>
+                            </div>
+                          )}
+
+                          <div>
+                            <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
+                              Description (optional)
+                            </label>
+                            <input
+                              {...register(
+                                `fields.${idx}.description` as const
+                              )}
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
+                              placeholder='Help text for this field'
+                            />
+                          </div>
                         </div>
                       )}
-
-                      {field.type === "uid" && (
-                        <div>
-                          <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
-                            Generate from field
-                          </label>
-                          <select
-                            {...register(
-                              `fields.${index}.targetField` as const
-                            )}
-                            className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'>
-                            <option value=''>Select a field</option>
-                            {fields
-                              .filter((f) => f.type === "text" && f.name)
-                              .map((f) => (
-                                <option key={f.name} value={f.name}>
-                                  {f.label || f.name}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-                      )}
-
-                      <div>
-                        <label className='block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5'>
-                          Description (optional)
-                        </label>
-                        <input
-                          {...register(`fields.${index}.description` as const)}
-                          className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
-                          placeholder='Help text for this field'
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                    />
+                  );
+                })}
+              </SortableContext>
+            </DndContext>
 
             {fields.length === 0 && (
               <SchemaEmptyState onAddField={() => setShowFieldPicker(true)} />
             )}
           </div>
+
         </div>
 
         <div className='flex justify-end pt-4 pb-20'>
