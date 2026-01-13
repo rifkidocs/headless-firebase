@@ -77,6 +77,24 @@ import SchemaEmptyState from "@/components/cms/SchemaEmptyState";
 import FieldModal from "@/components/cms/FieldModal";
 import FieldConfigModal from "@/components/cms/FieldConfigModal";
 
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableField } from "@/components/cms/SortableField";
+import { reorder } from "@/lib/utils";
+
 interface SchemaForm {
   label: string;
   slug: string;
