@@ -66,11 +66,11 @@ export default function SchemaListPage() {
 
       if (!response.ok) {
         let errorMessage = "Failed to delete content type";
+        const text = await response.text();
         try {
-          const error = await response.json();
+          const error = JSON.parse(text);
           errorMessage = error.error || errorMessage;
         } catch (e) {
-          const text = await response.text();
           console.error("Non-JSON API Error:", text);
           errorMessage = `API Error (${response.status}): ${response.statusText}`;
         }
