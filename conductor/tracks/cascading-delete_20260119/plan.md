@@ -27,10 +27,10 @@
         - Test: Delete button disabled until match.
     - [x] Implement `components/ui/StrictConfirmDialog.tsx`.
         - Props: `isOpen`, `onClose`, `onConfirm`, `title`, `collectionName`.
-- [~] Task: Integrate Deletion Logic in Schema List
-    - [ ] Modify `app/admin/schema/page.tsx`.
+- [x] Task: Integrate Deletion Logic in Schema List 17a1640
+    - [x] Modify `app/admin/schema/page.tsx`.
         - Replace `ConfirmDialog` with `StrictConfirmDialog`.
         - Update `handleDelete` to call `DELETE /api/schema/[slug]`.
         - Add loading state handling during the async API call.
         - Add success/error toast notifications.
-- [ ] Task: Conductor - User Manual Verification 'Frontend UI & Integration' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Frontend UI & Integration' (Protocol in workflow.md)
