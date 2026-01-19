@@ -472,37 +472,37 @@ export default function SchemaEditorPage({
                 control={control}
                 render={({ field }) => (
                   <div className='flex gap-4 flex-wrap'>
-                    <label className='flex items-center gap-2 cursor-pointer'>
+                    <label className='flex items-center gap-2 cursor-pointer group'>
                       <input
                         type='radio'
                         {...field}
                         value='collectionType'
                         checked={field.value === "collectionType"}
-                        className='w-4 h-4 text-blue-600'
+                        className='w-4 h-4 border-gray-300 accent-blue-600'
                       />
-                      <span className='text-sm text-gray-700'>
+                      <span className='text-sm text-gray-700 group-hover:text-blue-600 transition-colors'>
                         Collection Type
                       </span>
                     </label>
-                    <label className='flex items-center gap-2 cursor-pointer'>
+                    <label className='flex items-center gap-2 cursor-pointer group'>
                       <input
                         type='radio'
                         {...field}
                         value='singleType'
                         checked={field.value === "singleType"}
-                        className='w-4 h-4 text-blue-600'
+                        className='w-4 h-4 border-gray-300 accent-blue-600'
                       />
-                      <span className='text-sm text-gray-700'>Single Type</span>
+                      <span className='text-sm text-gray-700 group-hover:text-blue-600 transition-colors'>Single Type</span>
                     </label>
-                    <label className='flex items-center gap-2 cursor-pointer'>
+                    <label className='flex items-center gap-2 cursor-pointer group'>
                       <input
                         type='radio'
                         {...field}
                         value='component'
                         checked={field.value === "component"}
-                        className='w-4 h-4 text-blue-600'
+                        className='w-4 h-4 border-gray-300 accent-blue-600'
                       />
-                      <span className='text-sm text-gray-700'>Component</span>
+                      <span className='text-sm text-gray-700 group-hover:text-blue-600 transition-colors'>Component</span>
                     </label>
                   </div>
                 )}

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X, Save, Component, Layers } from 'lucide-react'
 import { Field, FieldType, FIELD_TYPE_CONFIG } from '@/lib/types'
@@ -43,9 +43,12 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
     formState: { errors },
   } = useForm<Field>()
 
+  const [isNameTouched, setIsNameTouched] = useState(false)
+
   useEffect(() => {
     if (field) {
       reset(field)
+      setIsNameTouched(!!field.name)
     }
   }, [field, reset])
 
@@ -110,8 +113,7 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
                           {...register('label', {
                             required: 'Label is required',
                             onChange: (e) => {
-                              const key = watch('name');
-                              if (!key || key === generateKey(field?.label || "")) {
+                              if (!isNameTouched) {
                                 setValue('name', generateKey(e.target.value));
                               }
                             }
@@ -126,7 +128,10 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
                       <div>
                         <label className="block text-sm font-semibold text-gray-900 mb-2">Field Key (API ID)</label>
                         <input
-                          {...register('name', { required: 'Key is required' })}
+                          {...register('name', { 
+                            required: 'Key is required',
+                            onChange: () => setIsNameTouched(true)
+                          })}
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-mono text-gray-900 placeholder:text-gray-400"
                           placeholder="field_key"
                         />
