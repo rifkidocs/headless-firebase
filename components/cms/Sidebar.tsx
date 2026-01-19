@@ -134,7 +134,7 @@ export function Sidebar() {
   return (
     <aside
       className={clsx(
-        "hidden md:flex bg-white text-gray-900 min-h-screen flex-col border-r border-gray-200 shadow-sm z-50 transition-all duration-300",
+        "hidden md:flex bg-white text-gray-900 h-screen sticky top-0 flex-col border-r border-gray-200 shadow-sm z-50 transition-all duration-300",
         collapsed ? "w-[72px]" : "w-72"
       )}>
       {/* Header */}
@@ -166,7 +166,7 @@ export function Sidebar() {
         </button>
       </div>
 
-      <nav className='flex-1 px-4 py-6 space-y-8 overflow-y-auto'>
+      <nav className='flex-1 px-4 py-6 space-y-8 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 hover:scrollbar-thumb-gray-300 scrollbar-track-transparent'>
         {/* Platform Section */}
         <NavSection title='Platform' collapsed={collapsed}>
           <NavItem

@@ -119,7 +119,7 @@ export function MobileMenu({ open, onOpenChange }: MobileMenuProps) {
                 </div>
 
                 {/* Nav Links */}
-                <nav className='flex-1 overflow-y-auto p-4 space-y-8'>
+                <nav className='flex-1 overflow-y-auto p-4 space-y-8 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent'>
                   <NavSection title='Platform'>
                     <NavItem
                       href='/admin'
