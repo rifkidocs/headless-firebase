@@ -3,12 +3,12 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, Trash2, Settings2 } from 'lucide-react'
 import clsx from 'clsx'
-import { FieldType, FIELD_TYPE_CONFIG } from '@/lib/types'
+import { Field, FieldType, FIELD_TYPE_CONFIG } from '@/lib/types'
 
 interface SortableFieldProps {
   id: string
   index: number
-  field: any
+  field: Field
   isExpanded: boolean
   onToggleExpand: (id: string) => void
   onRemove: (index: number) => void
@@ -22,7 +22,6 @@ export const SortableField: React.FC<SortableFieldProps> = ({
   index,
   field,
   isExpanded,
-  onToggleExpand,
   onRemove,
   onEdit,
   renderSettings,

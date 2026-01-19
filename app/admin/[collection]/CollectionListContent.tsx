@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/firebase";

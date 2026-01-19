@@ -1,7 +1,7 @@
 import { CollectionConfig, Field } from "./types";
 
 export function generateOpenApiSpec(collections: CollectionConfig[]) {
-  const spec: any = {
+  const spec: Record<string, unknown> = {
     openapi: "3.0.0",
     info: {
       title: "Headless Firebase API",
@@ -16,10 +16,12 @@ export function generateOpenApiSpec(collections: CollectionConfig[]) {
 
   collections.forEach((col) => {
     const schemaName = col.label.replace(/\s+/g, "");
-    spec.components.schemas[schemaName] = generateSchema(col);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (spec.components as Record<string, any>).schemas[schemaName] = generateSchema(col);
 
     // List & Create
-    spec.paths[`/api/${col.slug}`] = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (spec.paths as Record<string, any>)[`/api/${col.slug}`] = {
       get: {
         summary: `Find all ${col.label}`,
         tags: [col.label],
@@ -56,7 +58,8 @@ export function generateOpenApiSpec(collections: CollectionConfig[]) {
     };
 
     // Single Resource
-    spec.paths[`/api/${col.slug}/{id}`] = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (spec.paths as Record<string, any>)[`/api/${col.slug}/{id}`] = {
       parameters: [
         {
           name: "id",
@@ -111,7 +114,7 @@ export function generateOpenApiSpec(collections: CollectionConfig[]) {
 }
 
 function generateSchema(col: CollectionConfig) {
-  const properties: any = {
+  const properties: Record<string, unknown> = {
     id: { type: "string" },
     createdAt: { type: "string", format: "date-time" },
     updatedAt: { type: "string", format: "date-time" },
@@ -133,7 +136,7 @@ function generateSchema(col: CollectionConfig) {
   };
 }
 
-function mapFieldToSchema(field: Field): any {
+function mapFieldToSchema(field: Field): Record<string, unknown> {
   switch (field.type) {
     case "number":
       return { type: "integer" };

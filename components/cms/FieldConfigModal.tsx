@@ -16,6 +16,13 @@ import {
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 
+const generateKey = (label: string) => {
+  return label
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]/g, '');
+};
+
 interface FieldConfigModalProps {
   isOpen: boolean
   field: Field | null
@@ -57,15 +64,9 @@ const FieldConfigModal: React.FC<FieldConfigModalProps> = ({
     onClose()
   }
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const fieldType = watch('type')
   const config = fieldType ? FIELD_TYPE_CONFIG[fieldType as FieldType] : null
-
-  const generateKey = (label: string) => {
-    return label
-      .toLowerCase()
-      .replace(/\s+/g, '_')
-      .replace(/[^a-z0-9_]/g, '');
-  };
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>

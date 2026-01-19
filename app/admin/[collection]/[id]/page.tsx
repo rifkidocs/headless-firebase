@@ -12,12 +12,13 @@ async function getCollectionConfig(slug: string): Promise<CollectionConfig | nul
       return { slug, ...configDoc.data() } as CollectionConfig;
     }
   } catch (e) {
+    console.error(e)
     console.warn("Server-side config fetch failed, using defaults.");
   }
   return null;
 }
 
-async function getEntryData(collectionSlug: string, id: string): Promise<Record<string, any> | null> {
+async function getEntryData(collectionSlug: string, id: string): Promise<Record<string, unknown> | null> {
   if (id === "new") return null;
   try {
     const docSnap = await getDoc(doc(db, collectionSlug, id));
@@ -25,6 +26,7 @@ async function getEntryData(collectionSlug: string, id: string): Promise<Record<
       return { id: docSnap.id, ...docSnap.data() };
     }
   } catch (e) {
+    console.error(e)
     console.warn("Server-side entry fetch failed, using defaults.");
   }
   return null;

@@ -10,6 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
       imageSubtitle: "Admin Portal",
     });
   } catch (e) {
+    console.error(e)
     return constructMetadata();
   }
 }

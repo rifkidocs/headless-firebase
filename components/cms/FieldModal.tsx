@@ -1,8 +1,7 @@
 import React from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, Type, AlignLeft, FileText, Hash, Percent, ToggleLeft, Calendar, Clock, Clock3, Mail, Lock, Fingerprint, Braces, List, Image, Link2, Component, Layers, Settings2 } from 'lucide-react'
+import { X, Type, AlignLeft, FileText, Hash, Percent, ToggleLeft, Calendar, Clock, Clock3, Mail, Lock, Fingerprint, Braces, List, Image, Link2, Component, Layers } from 'lucide-react'
 import { FieldType, FIELD_TYPE_CONFIG } from '@/lib/types'
-import clsx from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface FieldModalProps {

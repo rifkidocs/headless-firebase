@@ -13,6 +13,7 @@ async function getCollectionConfig(slug: string): Promise<CollectionConfig | nul
     }
   } catch (e) {
     // This will likely fail on server without Admin SDK
+    console.error(e)
     console.warn("Server-side metadata fetch failed, using defaults.");
   }
   return null;

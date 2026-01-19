@@ -4,7 +4,7 @@ import { checkPublicPermission } from '@/lib/permissions'
 jest.mock('@/lib/permissions', () => ({
   checkPublicPermission: jest.fn(async (slug, action) => {
     // Basic mock implementation of the logic we want to test
-    const mockData: Record<string, any> = {
+    const mockData: Record<string, Record<string, boolean>> = {
       'posts': {
         find: true,
         findOne: true,

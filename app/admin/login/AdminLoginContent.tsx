@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import {
-  signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  createUserWithEmailAndPassword,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
@@ -39,7 +37,7 @@ export default function AdminLoginContent() {
     mode: "onChange",
   });
 
-  const getFirebaseErrorMessage = (error: any) => {
+  const getFirebaseErrorMessage = (error: { code: string; message: string }) => {
     switch (error.code) {
       case "auth/invalid-credential":
         return "Invalid email or password. Please try again.";
@@ -58,21 +56,14 @@ export default function AdminLoginContent() {
     }
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async () => {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        await signInWithEmailAndPassword(auth, data.email, data.password);
-        toast.success("Signed in successfully!");
-      } else {
-        await createUserWithEmailAndPassword(auth, data.email, data.password);
-        toast.success("Account created successfully!");
-      }
       router.push("/admin");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(getFirebaseErrorMessage(err));
+      toast.error(getFirebaseErrorMessage(err as { code: string; message: string }));
     } finally {
       setLoading(false);
     }
@@ -85,9 +76,9 @@ export default function AdminLoginContent() {
       await signInWithPopup(auth, provider);
       toast.success("Signed in with Google!");
       router.push("/admin");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(getFirebaseErrorMessage(err));
+      toast.error(getFirebaseErrorMessage(err as { code: string; message: string }));
     } finally {
       setLoading(false);
     }

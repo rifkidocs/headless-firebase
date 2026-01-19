@@ -23,8 +23,11 @@ describe('constructMetadata', () => {
     const metadata = constructMetadata({
       title: 'Post Title',
     })
-    const ogImage = (metadata.openGraph?.images as any)[0]
-    expect(ogImage.url).toContain('/api/og?title=Post+Title')
+    const ogImage = Array.isArray(metadata.openGraph?.images) 
+      ? metadata.openGraph?.images[0] as { url: string }
+      : undefined
+    
+    expect(ogImage?.url).toContain('/api/og?title=Post+Title')
   })
 
   it('includes robots: noindex when noIndex is true', () => {

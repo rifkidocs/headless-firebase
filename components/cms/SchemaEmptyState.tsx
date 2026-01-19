@@ -9,7 +9,7 @@ const SchemaEmptyState: React.FC<SchemaEmptyStateProps> = ({ onAddField }) => {
     <div className="flex flex-col items-center justify-center py-20 px-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-500">
       <div className="text-center">
         <h3 className="text-lg font-medium text-gray-900">No fields yet</h3>
-        <p className="mt-1 text-sm text-gray-500">Click "Add Field" to start building your schema.</p>
+        <p className="mt-1 text-sm text-gray-500">Click &quot;Add Field&quot; to start building your schema.</p>
         <div className="mt-6">
           <button
             type="button"

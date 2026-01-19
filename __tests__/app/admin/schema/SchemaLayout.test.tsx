@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-import SchemaEmptyState from '@/components/cms/SchemaEmptyState'
+// import { render, screen } from '@testing-library/react'
+// import SchemaEmptyState from '@/components/cms/SchemaEmptyState'
 
 // Mocking the component for isolation
 jest.mock('@/components/cms/SchemaEmptyState', () => {

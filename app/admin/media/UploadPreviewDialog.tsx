@@ -36,7 +36,7 @@ const PreviewItem = ({
     let url = "";
     if (file.type.startsWith("image/")) {
       url = URL.createObjectURL(file);
-      setPreview(url);
+      setTimeout(() => setPreview(url), 0);
     }
     return () => {
       if (url) URL.revokeObjectURL(url);

@@ -24,6 +24,7 @@ export async function GET(
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
   } catch (error) {
+    console.error(error)
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
   }
 }
@@ -50,6 +51,7 @@ export async function PATCH(
 
     return NextResponse.json({ id, ...body }, { status: 200 });
   } catch (error) {
+    console.error(error)
     return NextResponse.json({ error: 'Failed to update data' }, { status: 500 });
   }
 }
@@ -70,6 +72,7 @@ export async function DELETE(
     await deleteDoc(docRef);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
+    console.error(error)
     return NextResponse.json({ error: 'Failed to delete data' }, { status: 500 });
   }
 }

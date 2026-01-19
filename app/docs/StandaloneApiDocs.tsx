@@ -8,7 +8,7 @@ import { generateOpenApiSpec } from "@/lib/openapi";
 import { Loader2 } from "lucide-react";
 
 export default function StandaloneApiDocs() {
-  const [spec, setSpec] = useState<any>(null);
+  const [spec, setSpec] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

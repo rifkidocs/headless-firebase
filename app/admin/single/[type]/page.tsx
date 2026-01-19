@@ -357,7 +357,7 @@ export default function SingleTypePage({
                         <SelectValue placeholder={`Select ${field.label}`} />
                       </SelectTrigger>
                       <SelectContent>
-                        {field.enumOptions?.map((opt: any) => (
+                        {field.enumOptions?.map((opt) => (
                           <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
                           </SelectItem>
@@ -399,7 +399,7 @@ export default function SingleTypePage({
                         <div className='space-y-3'>
                           <div className='flex flex-wrap gap-2'>
                             {selectedIds.map((id) => {
-                              const item = items.find((i: any) => i.id === id);
+                              const item = items.find((i) => i.id === id);
                               return (
                                 <Badge key={id} variant="secondary" className="pl-3 pr-1 py-1 gap-1">
                                   {item?.label || id}
@@ -411,7 +411,7 @@ export default function SingleTypePage({
                             })}
                           </div>
                           <Combobox
-                            options={items.filter((i: any) => !selectedIds.includes(i.id)).map((item: any) => ({ value: item.id, label: item.label }))}
+                            options={items.filter((i) => !selectedIds.includes(i.id)).map((item) => ({ value: item.id, label: item.label }))}
                             onValueChange={(val) => { if (val && !selectedIds.includes(val)) f.onChange([...selectedIds, val]); }}
                             placeholder={`Add ${field.label}...`}
                             searchPlaceholder={`Search ${field.label.toLowerCase()}...`}
@@ -421,7 +421,7 @@ export default function SingleTypePage({
                     }
                     return (
                       <Combobox
-                        options={items.map((item: any) => ({ value: item.id, label: item.label }))}
+                        options={items.map((item) => ({ value: item.id, label: item.label }))}
                         value={f.value}
                         onValueChange={f.onChange}
                         placeholder={`Select ${field.label}`}

@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { AuthProvider, useAuth } from '@/components/providers/AuthProvider'
-import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import { onAuthStateChanged } from 'firebase/auth'
 
 // Mock firebase/auth
 jest.mock('firebase/auth', () => ({

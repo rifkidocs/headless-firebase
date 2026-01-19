@@ -18,10 +18,7 @@ import {
   ArrowLeft,
   Save,
   Plus,
-  Trash2,
   Loader2,
-  GripVertical,
-  ChevronDown,
   Type,
   AlignLeft,
   FileText,
@@ -47,7 +44,6 @@ import clsx from "clsx";
 import { toast } from "@/components/ui/Toast";
 import {
   FieldType,
-  FIELD_TYPE_CONFIG,
   Field,
   ComponentDefinition,
 } from "@/lib/types";
@@ -87,21 +83,12 @@ import {
   DragEndEvent,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { SortableField } from "@/components/cms/SortableField";
-import { reorder } from "@/lib/utils";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface SchemaForm {
@@ -128,12 +115,6 @@ export default function SchemaEditorPage({
   const router = useRouter();
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
-  const [manuallyEditedKeys, setManuallyEditedKeys] = useState<
-    Record<string, boolean>
-  >({});
-  const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>(
-    {}
-  );
   const [collections, setCollections] = useState<CollectionOption[]>([]);
   const [components, setComponents] = useState<ComponentDefinition[]>([]);
   const [showFieldPicker, setShowFieldPicker] = useState(false);
@@ -223,15 +204,6 @@ export default function SchemaEditorPage({
       setValue("slug", slug);
     }
   }, [labelValue, isNew, setValue]);
-
-  // Helper to generate camelCase key from label
-  const generateKey = (label: string) => {
-    return label
-      .toLowerCase()
-      .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .replace(/^(.)/, (c) => c.toLowerCase());
-  };
 
   useEffect(() => {
     if (isNew) return;
@@ -373,13 +345,6 @@ export default function SchemaEditorPage({
     setConfigModalOpen(true);
   };
 
-  const toggleFieldExpand = (index: string) => {
-    setExpandedFields((prev) => ({
-      ...prev,
-      [index]: !prev[index],
-    }));
-  };
-
   if (loading) {
     return (
       <div className='flex justify-center p-8 h-96 items-center'>
@@ -387,40 +352,6 @@ export default function SchemaEditorPage({
       </div>
     );
   }
-
-  const fieldCategories = [
-    {
-      name: "Text",
-      types: [
-        "text",
-        "textarea",
-        "richtext",
-        "email",
-        "password",
-        "uid",
-      ] as FieldType[],
-    },
-    {
-      name: "Number",
-      types: ["number", "decimal"] as FieldType[],
-    },
-    {
-      name: "Date & Time",
-      types: ["date", "datetime", "time"] as FieldType[],
-    },
-    {
-      name: "Other",
-      types: ["boolean", "enumeration", "json", "media"] as FieldType[],
-    },
-    {
-      name: "Components",
-      types: ["component", "dynamiczone"] as FieldType[],
-    },
-    {
-      name: "Relation",
-      types: ["relation"] as FieldType[],
-    },
-  ];
 
   return (
     <div className='max-w-5xl mx-auto'>

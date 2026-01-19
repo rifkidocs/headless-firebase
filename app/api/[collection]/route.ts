@@ -24,6 +24,7 @@ export async function GET(
     }));
     return NextResponse.json(data);
   } catch (error) {
+    console.error(error)
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
   }
 }
@@ -48,6 +49,7 @@ export async function POST(
     });
     return NextResponse.json({ id: docRef.id, ...body }, { status: 201 });
   } catch (error) {
+    console.error(error)
     return NextResponse.json({ error: 'Failed to create data' }, { status: 500 });
   }
 }

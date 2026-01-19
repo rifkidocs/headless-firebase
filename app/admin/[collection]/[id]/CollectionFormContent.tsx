@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/firebase";
@@ -17,7 +17,7 @@ import {
   onSnapshot,
   getDocs,
 } from "firebase/firestore";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, UseFormRegister, Control, FieldErrors, FieldValues } from "react-hook-form";
 import {
   ArrowLeft,
   Save,
@@ -318,7 +318,14 @@ function FormField({
   errors,
   components,
   relatedData,
-}: any) {
+}: {
+  field: Field;
+  register: UseFormRegister<FieldValues>;
+  control: Control<FieldValues>;
+  errors: FieldErrors<FieldValues>;
+  components: Record<string, ComponentDefinition>;
+  relatedData: Record<string, { id: string; label: string }[]>;
+}) {
   const error = errors[field.name];
 
   const baseInputClass = clsx(
@@ -520,7 +527,7 @@ function FormField({
                 <SelectValue placeholder={`Select ${field.label}`} />
               </SelectTrigger>
               <SelectContent>
-                {field.enumOptions?.map((opt: any) => (
+                {field.enumOptions?.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>
@@ -565,7 +572,7 @@ function FormField({
 
                                 {selectedIds.map((id) => {
 
-                                  const item = items.find((i: any) => i.id === id);
+                                  const item = items.find((i) => i.id === id);
 
                                   return (
 
@@ -609,9 +616,9 @@ function FormField({
 
                                 options={items
 
-                                  .filter((i: any) => !selectedIds.includes(i.id))
+                                  .filter((i) => !selectedIds.includes(i.id))
 
-                                  .map((item: any) => ({
+                                  .map((item) => ({
 
                                     value: item.id,
 
@@ -644,7 +651,7 @@ function FormField({
             
             return (
               <Combobox
-                options={items.map((item: any) => ({
+                options={items.map((item) => ({
                   value: item.id,
                   label: item.label,
                 }))}
