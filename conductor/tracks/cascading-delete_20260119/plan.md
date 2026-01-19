@@ -20,7 +20,7 @@
         - Delete the Schema definition document.
 - [x] Task: Conductor - User Manual Verification 'Backend Foundation & API' (Protocol in workflow.md)
 
-## Phase 2: Frontend UI & Integration
+## Phase 2: Frontend UI & Integration [checkpoint: dbde01b]
 - [x] Task: Create Strict Confirmation Dialog ef118ca
     - [x] Create `__tests__/components/ui/StrictConfirmDialog.test.tsx`.
         - Test: specific input validation (must match name).
@@ -33,4 +33,4 @@
         - Update `handleDelete` to call `DELETE /api/schema/[slug]`.
         - Add loading state handling during the async API call.
         - Add success/error toast notifications.
-- [~] Task: Conductor - User Manual Verification 'Frontend UI & Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Frontend UI & Integration' (Protocol in workflow.md)
