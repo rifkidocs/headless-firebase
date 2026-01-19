@@ -574,7 +574,7 @@ export default function SchemaEditorPage({
 
         {/* Fields Builder */}
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
-          <div className='p-6 border-b border-gray-200 bg-gray-50/50 flex justify-between items-center'>
+          <div className='p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4'>
             <div>
               <h2 className='text-base font-semibold text-gray-900'>
                 Fields Structure
@@ -583,11 +583,11 @@ export default function SchemaEditorPage({
                 Add and configure fields for your content type.
               </p>
             </div>
-            <div className='relative'>
+            <div className='relative w-full sm:w-auto'>
               <button
                 type='button'
                 onClick={() => setShowFieldPicker(true)}
-                className='inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm'>
+                className='w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium transition-colors shadow-sm'>
                 <Plus className='w-4 h-4' /> Add Field
               </button>
 
