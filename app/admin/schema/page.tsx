@@ -20,8 +20,9 @@ import {
   FileText,
 } from "lucide-react";
 import { toast } from "@/components/ui/Toast";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { StrictConfirmDialog } from "@/components/ui/StrictConfirmDialog";
 import { CollectionConfig } from "@/lib/types";
+import { auth } from "@/lib/firebase";
 
 export default function SchemaListPage() {
   const [collections, setCollections] = useState<CollectionConfig[]>([]);
@@ -52,12 +53,27 @@ export default function SchemaListPage() {
   const handleDelete = async (col: CollectionConfig) => {
     setDeleting(true);
     try {
-      await deleteDoc(doc(db, "_collections", col.slug));
-      toast.success("Content type deleted successfully");
+      const user = auth.currentUser;
+      if (!user) throw new Error("Not authenticated");
+      const token = await user.getIdToken();
+
+      const response = await fetch(`/api/schema/${col.slug}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete content type");
+      }
+
+      toast.success("Content type and all data deleted successfully");
       setDeleteDialog({ open: false, collection: null });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting collection:", error);
-      toast.error("Failed to delete content type");
+      toast.error(error.message || "Failed to delete content type");
     } finally {
       setDeleting(false);
     }
@@ -231,7 +247,7 @@ export default function SchemaListPage() {
         </div>
       )}
 
-      <ConfirmDialog
+      <StrictConfirmDialog
         open={deleteDialog.open}
         onOpenChange={(open) =>
           setDeleteDialog({
@@ -240,9 +256,10 @@ export default function SchemaListPage() {
           })
         }
         title='Delete Content Type'
-        description={`Are you sure you want to delete "${deleteDialog.collection?.label}"? This will only delete the content type configuration, not the data.`}
+        description={`Are you sure you want to delete "${deleteDialog.collection?.label}"? This will permanently delete the content type configuration and all associated data, including media.`}
         confirmText='Delete'
         variant='danger'
+        expectedValue={deleteDialog.collection?.label || ""}
         onConfirm={() => {
           if (deleteDialog.collection) {
             handleDelete(deleteDialog.collection);
