@@ -125,9 +125,10 @@ export default function ComponentEditorPage({
     setSaving(true);
     try {
       const docId = isNew ? data.name : id;
+      const sanitizedData = JSON.parse(JSON.stringify(data));
 
       await setDoc(doc(db, "_components", docId), {
-        ...data,
+        ...sanitizedData,
         updatedAt: serverTimestamp(),
         ...(isNew && { createdAt: serverTimestamp() }),
       });

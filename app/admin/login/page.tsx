@@ -1,5 +1,6 @@
 import { constructMetadata } from "@/lib/metadata-utils";
 import AdminLoginContent from "./AdminLoginContent";
+import type { Metadata } from "next";
 
 export async function generateMetadata(): Promise<Metadata> {
   try {

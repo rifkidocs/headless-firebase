@@ -652,7 +652,7 @@ function FormField({
                         <button type='button' onClick={() => f.onChange(items.filter((_, i) => i !== idx))} className='p-1 text-gray-400 hover:text-red-500'><Trash2 className='w-4 h-4' /></button>
                       </div>
                       <div className='space-y-4'>
-                        {compDef.fields?.map((cf) => (
+                        {compDef.fields?.map((cf: Field) => (
                           <div key={cf.name}>
                             <label className='block text-xs font-medium text-gray-600 mb-1'>{cf.label}</label>
                             <input
@@ -678,7 +678,7 @@ function FormField({
             const value = (f.value as Record<string, unknown>) || {};
             return (
               <div className='border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-4'>
-                {compDef.fields?.map((cf) => (
+                {compDef.fields?.map((cf: Field) => (
                   <div key={cf.name}>
                     <label className='block text-xs font-medium text-gray-600 mb-1'>{cf.label}</label>
                     <input

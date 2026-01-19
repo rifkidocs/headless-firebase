@@ -280,13 +280,16 @@ export default function SchemaEditorPage({
     try {
       const docId = isNew ? data.slug : id;
 
+      // Remove undefined values from data
+      const sanitizedData = JSON.parse(JSON.stringify(data));
+
       if (data.kind === "component") {
         const componentData: ComponentDefinition = {
           id: docId,
           name: data.slug,
           displayName: data.label,
           category: data.category || "General",
-          fields: data.fields,
+          fields: sanitizedData.fields,
           updatedAt: new Date(),
         };
 
@@ -297,7 +300,7 @@ export default function SchemaEditorPage({
         });
       } else {
         await setDoc(doc(db, "_collections", docId), {
-          ...data,
+          ...sanitizedData,
           updatedAt: serverTimestamp(),
           ...(isNew && { createdAt: serverTimestamp() }),
         });

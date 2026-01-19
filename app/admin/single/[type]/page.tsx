@@ -78,8 +78,9 @@ export default function SingleTypePage({
   const onSubmit = async (data: Record<string, unknown>) => {
     setSaving(true);
     try {
+      const sanitizedData = JSON.parse(JSON.stringify(data));
       await setDoc(doc(db, `_single_${type}`, "data"), {
-        ...data,
+        ...sanitizedData,
         updatedAt: serverTimestamp(),
       });
       toast.success("Saved successfully!");
