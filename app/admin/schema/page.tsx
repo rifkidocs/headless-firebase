@@ -65,8 +65,16 @@ export default function SchemaListPage() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to delete content type");
+        let errorMessage = "Failed to delete content type";
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } catch (e) {
+          const text = await response.text();
+          console.error("Non-JSON API Error:", text);
+          errorMessage = `API Error (${response.status}): ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       toast.success("Content type and all data deleted successfully");
