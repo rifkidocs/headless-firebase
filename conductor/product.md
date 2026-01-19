@@ -12,7 +12,7 @@ A headless CMS built with Next.js, Firebase, and Cloudinary, designed to provide
 
 ## Key Features
 - **Role-Based Access Control (RBAC) & Public Access:** Granular permission management for admin roles and public unauthenticated access control per collection.
-- **Dynamic Content Modeling:** Empower users to define and modify content structures (schemas) without changing backend code.
+- **Dynamic Content Modeling:** Empower users to define and modify content structures (schemas) without changing backend code, including automated cascading deletion of associated content and media.
 - **Integrated Media Management:** Seamless media handling using Cloudinary for storage, optimization, and delivery.
 - **Automated API Documentation:** Integrated interactive documentation using Scalar, providing a clear reference for developers.
 - **Dynamic Social Previews:** Automated Open Graph and Twitter metadata generation with dynamic, branded preview images for all content and pages.

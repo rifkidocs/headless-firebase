@@ -10,7 +10,7 @@
     - **Firestore:** NoSQL database for content storage and schema definitions.
     - **Authentication:** Secure user management and authentication.
     - **Storage:** Initial file storage (supplemented by Cloudinary).
-    - **Admin SDK:** Server-side operations and administrative tasks.
+    - **Admin SDK (firebase-admin):** Secure server-side operations, cascading deletions, and administrative tasks.
 
 ## Media & Content
 - **Cloudinary:** Primary service for media management, providing optimized image and video delivery.
