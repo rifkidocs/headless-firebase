@@ -85,6 +85,24 @@ export async function deleteFromCloudinary(
     });
 }
 
+export async function deleteResources(
+    publicIds: string[],
+    resourceType: "image" | "video" | "raw" = "image"
+): Promise<{ deleted: Record<string, string> }> {
+    if (publicIds.length === 0) return { deleted: {} };
+    
+    return new Promise((resolve, reject) => {
+        cloudinary.api.delete_resources(
+            publicIds,
+            { resource_type: resourceType },
+            (error, result) => {
+                if (error) reject(error);
+                else resolve(result as { deleted: Record<string, string> });
+            }
+        );
+    });
+}
+
 export function getCloudinaryUrl(
     publicId: string,
     options: Record<string, unknown> = {}
