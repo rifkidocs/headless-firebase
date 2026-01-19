@@ -4,13 +4,13 @@
 - [x] Task: Initialize Firebase Admin SDK 0d3ff3d
     - [x] Create `lib/firebase-admin.ts` to export initialized admin app.
     - [x] Ensure environment variables for Service Account are properly handled/documented.
-- [ ] Task: Create Cascading Delete API Endpoint
-    - [ ] Create `__tests__/api/schema/delete.test.ts` (Integration Test).
+- [x] Task: Create Cascading Delete API Endpoint c7ea779
+    - [x] Create `__tests__/api/schema/delete.test.ts` (Integration Test).
         - Test: Should return 401 if unauthorized.
         - Test: Should delete Cloudinary assets (mocked).
         - Test: Should batch delete Firestore documents (mocked).
         - Test: Should delete the schema document (mocked).
-    - [ ] Implement `DELETE /api/schema/[slug]/route.ts`.
+    - [x] Implement `DELETE /api/schema/[slug]/route.ts`.
         - Verify Admin Authentication.
         - Fetch schema definition to find 'media' type fields.
         - Query all documents in the target collection.
