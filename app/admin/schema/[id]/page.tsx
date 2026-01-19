@@ -307,7 +307,10 @@ export default function SchemaEditorPage({
       }
 
       toast.success(isNew ? "Content type created!" : "Content type updated!");
-      router.push("/admin/schema");
+      
+      if (isNew) {
+        router.replace(`/admin/schema/${docId}`);
+      }
     } catch (error) {
       console.error("Error saving schema:", error);
       toast.error("Failed to save schema");

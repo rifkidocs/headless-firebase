@@ -1,7 +1,7 @@
 import React from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, Trash2, ChevronDown, Settings2 } from 'lucide-react'
+import { GripVertical, Trash2, Settings2 } from 'lucide-react'
 import clsx from 'clsx'
 import { FieldType, FIELD_TYPE_CONFIG } from '@/lib/types'
 
@@ -55,8 +55,7 @@ export const SortableField: React.FC<SortableFieldProps> = ({
     >
       {/* Field Header */}
       <div
-        className="flex items-center gap-3 p-4 cursor-pointer"
-        onClick={() => onToggleExpand(id)}
+        className="flex items-center gap-3 p-4"
       >
         <div
           {...attributes}
@@ -108,13 +107,6 @@ export const SortableField: React.FC<SortableFieldProps> = ({
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
-        
-        <ChevronDown
-          className={clsx(
-            "w-5 h-5 text-gray-400 transition-transform",
-            isExpanded && "rotate-180"
-          )}
-        />
       </div>
 
       {/* Field Settings */}

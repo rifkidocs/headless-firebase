@@ -9,6 +9,8 @@ import {
   orderBy,
   limit,
   getDocs,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 import Link from "next/link";
 import {
@@ -45,6 +47,7 @@ interface RecentEntry {
   collectionLabel: string;
   title: string;
   updatedAt: Date;
+  kind: string;
 }
 
 export default function DashboardPage() {
@@ -67,16 +70,22 @@ export default function DashboardPage() {
 
       // Fetch stats for each collection
       const stats: ContentStat[] = [];
-      for (const col of cols.filter((c) => c.kind !== "singleType")) {
-        try {
-          const colDocs = await getDocs(collection(db, col.slug));
-          stats.push({
-            slug: col.slug,
-            label: col.label,
-            count: colDocs.size,
-          });
-        } catch {
-          stats.push({ slug: col.slug, label: col.label, count: 0 });
+      for (const col of cols) {
+        if (col.kind === "singleType") {
+          // Single types always have 1 entry effectively if initialized, or 0? 
+          // Usually we count them as 1 for presence.
+           stats.push({ slug: col.slug, label: col.label, count: 1 });
+        } else {
+          try {
+            const colDocs = await getDocs(collection(db, col.slug));
+            stats.push({
+              slug: col.slug,
+              label: col.label,
+              count: colDocs.size,
+            });
+          } catch {
+            stats.push({ slug: col.slug, label: col.label, count: 0 });
+          }
         }
       }
       setContentStats(stats);
@@ -108,31 +117,55 @@ export default function DashboardPage() {
 
     const fetchRecent = async () => {
       const entries: RecentEntry[] = [];
-      for (const col of collections
-        .filter((c) => c.kind !== "singleType")
-        .slice(0, 5)) {
+      
+      // Process all collections to find the globally most recent items
+      for (const col of collections) {
         try {
-          const recentQuery = query(
-            collection(db, col.slug),
-            orderBy("updatedAt", "desc"),
-            limit(2)
-          );
-          const snapshot = await getDocs(recentQuery);
-          snapshot.docs.forEach((doc) => {
-            const data = doc.data();
-            entries.push({
-              id: doc.id,
-              collection: col.slug,
-              collectionLabel: col.label,
-              title: data.title || data.name || doc.id,
-              updatedAt: data.updatedAt?.toDate() || new Date(),
+          if (col.kind === "singleType") {
+             const docRef = doc(db, `_single_${col.slug}`, "data");
+             const docSnap = await getDoc(docRef);
+             if (docSnap.exists()) {
+               const data = docSnap.data();
+               if (data.updatedAt) {
+                 entries.push({
+                   id: "data", // Fixed ID for single types
+                   collection: col.slug,
+                   collectionLabel: col.label,
+                   title: col.label, // Use label as title for single types
+                   updatedAt: data.updatedAt?.toDate() || new Date(),
+                   kind: "singleType",
+                 });
+               }
+             }
+          } else {
+            const recentQuery = query(
+              collection(db, col.slug),
+              orderBy("updatedAt", "desc"),
+              limit(5) // Fetch a few more to sort globally later
+            );
+            const snapshot = await getDocs(recentQuery);
+            snapshot.docs.forEach((doc) => {
+              const data = doc.data();
+              entries.push({
+                id: doc.id,
+                collection: col.slug,
+                collectionLabel: col.label,
+                title: data.title || data.name || doc.id,
+                updatedAt: data.updatedAt?.toDate() || new Date(),
+                kind: "collectionType",
+              });
             });
-          });
-        } catch {
-          // Skip if collection doesn't exist or has no updatedAt field
+          }
+        } catch (e) {
+          // Skip if collection error
+          console.error(`Error fetching recent for ${col.slug}`, e);
         }
       }
+      
+      // Sort all gathered entries by date desc
       entries.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      
+      // Keep top 5
       setRecentEntries(entries.slice(0, 5));
     };
 
@@ -174,7 +207,7 @@ export default function DashboardPage() {
         <StatCard
           icon={Box}
           label='Content Types'
-          value={collections.filter((c) => c.kind !== "singleType").length}
+          value={collections.length}
           color='indigo'
           href='/admin/schema'
         />
@@ -229,7 +262,7 @@ export default function DashboardPage() {
                 {contentStats.map((stat) => (
                   <Link
                     key={stat.slug}
-                    href={`/admin/${stat.slug}`}
+                    href={collections.find(c => c.slug === stat.slug)?.kind === 'singleType' ? `/admin/single/${stat.slug}` : `/admin/${stat.slug}`}
                     className='flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group'>
                     <div className='flex items-center gap-3'>
                       <div className='w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center'>
@@ -273,7 +306,7 @@ export default function DashboardPage() {
                 {recentEntries.map((entry) => (
                   <Link
                     key={`${entry.collection}-${entry.id}`}
-                    href={`/admin/${entry.collection}/${entry.id}`}
+                    href={entry.kind === 'singleType' ? `/admin/single/${entry.collection}` : `/admin/${entry.collection}/${entry.id}`}
                     className='block group'>
                     <div className='flex items-start gap-3'>
                       <div className='w-2 h-2 rounded-full bg-blue-500 mt-2' />

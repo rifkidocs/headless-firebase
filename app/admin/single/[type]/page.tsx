@@ -3,15 +3,25 @@
 import { use, useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs, query, orderBy, onSnapshot } from "firebase/firestore";
 import { useForm, Controller } from "react-hook-form";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Calendar, X, GripVertical, Trash2, Plus } from "lucide-react";
 import Link from "next/link";
 import { toast } from "@/components/ui/Toast";
 import { RichTextEditor } from "@/components/cms/RichTextEditor";
 import { MediaPicker } from "@/components/cms/MediaPicker";
-import { CollectionConfig } from "@/lib/types";
+import { CollectionConfig, ComponentDefinition, Field } from "@/lib/types";
 import clsx from "clsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Combobox } from "@/components/ui/Combobox";
+import { Badge } from "@/components/ui/badge";
 
 export default function SingleTypePage({
   params,
@@ -23,6 +33,8 @@ export default function SingleTypePage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [config, setConfig] = useState<CollectionConfig | null>(null);
+  const [components, setComponents] = useState<Record<string, ComponentDefinition>>({});
+  const [relatedData, setRelatedData] = useState<Record<string, { id: string; label: string }[]>>({});
 
   const {
     handleSubmit,
@@ -31,6 +43,19 @@ export default function SingleTypePage({
     register,
     formState: { errors },
   } = useForm();
+
+  // Fetch components
+  useEffect(() => {
+    const q = query(collection(db, "_components"), orderBy("displayName"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const comps: Record<string, ComponentDefinition> = {};
+      snapshot.docs.forEach((doc) => {
+        comps[doc.id] = { id: doc.id, ...doc.data() } as ComponentDefinition;
+      });
+      setComponents(comps);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Fetch config and data
   useEffect(() => {
@@ -46,6 +71,21 @@ export default function SingleTypePage({
 
         const configData = configDoc.data() as CollectionConfig;
         setConfig(configData);
+
+        // Fetch related data
+        const relationFields = configData.fields?.filter((f) => f.type === "relation") || [];
+        for (const field of relationFields) {
+          if (field.relation?.target) {
+            try {
+              const relDocs = await getDocs(collection(db, field.relation.target));
+              const items = relDocs.docs.map((d) => ({
+                id: d.id,
+                label: d.data().title || d.data().name || d.id,
+              }));
+              setRelatedData((prev) => ({ ...prev, [field.name]: items }));
+            } catch { /* ignore */ }
+          }
+        }
 
         // Get single entry data
         const dataDoc = await getDoc(doc(db, `_single_${type}`, "data"));
@@ -134,15 +174,19 @@ export default function SingleTypePage({
                 </p>
               )}
 
+              {/* Text */}
               {field.type === "text" && (
                 <input
                   type='text'
                   {...register(field.name, { required: field.required })}
                   className={baseInputClass(!!errors[field.name])}
                   placeholder={field.placeholder}
+                  minLength={field.minLength}
+                  maxLength={field.maxLength}
                 />
               )}
 
+              {/* Textarea */}
               {field.type === "textarea" && (
                 <textarea
                   {...register(field.name, { required: field.required })}
@@ -151,9 +195,12 @@ export default function SingleTypePage({
                     "min-h-[120px] resize-y"
                   )}
                   placeholder={field.placeholder}
+                  minLength={field.minLength}
+                  maxLength={field.maxLength}
                 />
               )}
 
+              {/* Rich Text */}
               {field.type === "richtext" && (
                 <Controller
                   name={field.name}
@@ -169,22 +216,159 @@ export default function SingleTypePage({
                 />
               )}
 
+              {/* Number */}
+              {(field.type === "number" || field.type === "decimal") && (
+                <input
+                  type='number'
+                  step={field.type === "decimal" ? "0.01" : "1"}
+                  {...register(field.name, {
+                    required: field.required,
+                    valueAsNumber: true,
+                    min: field.min,
+                    max: field.max,
+                  })}
+                  className={baseInputClass(!!errors[field.name])}
+                  placeholder={field.placeholder}
+                  min={field.min}
+                  max={field.max}
+                />
+              )}
+
+              {/* Boolean */}
               {field.type === "boolean" && (
                 <div className='flex items-center h-10'>
-                  <label className='relative inline-flex items-center cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      {...register(field.name)}
-                      className='sr-only peer'
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    <span className='ml-3 text-sm font-medium text-gray-700'>
-                      {field.label}
-                    </span>
-                  </label>
+                   <Controller
+                    name={field.name}
+                    control={control}
+                    render={({ field: f }) => (
+                      <div className="flex items-center space-x-3">
+                        <Checkbox
+                          id={field.name}
+                          checked={f.value}
+                          onCheckedChange={f.onChange}
+                        />
+                        <label
+                          htmlFor={field.name}
+                          className="text-sm font-medium text-gray-700 cursor-pointer"
+                        >
+                          {field.label}
+                        </label>
+                      </div>
+                    )}
+                  />
                 </div>
               )}
 
+              {/* Date/Time Fields */}
+              {field.type === "date" && (
+                <div className='relative'>
+                  <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                    <Calendar className='h-5 w-5 text-gray-400' />
+                  </div>
+                  <input
+                    type='date'
+                    {...register(field.name, { required: field.required })}
+                    className={clsx(baseInputClass(!!errors[field.name]), "pl-10")}
+                  />
+                </div>
+              )}
+
+              {field.type === "datetime" && (
+                <input
+                  type='datetime-local'
+                  {...register(field.name, { required: field.required })}
+                  className={baseInputClass(!!errors[field.name])}
+                />
+              )}
+
+              {field.type === "time" && (
+                <input
+                  type='time'
+                  {...register(field.name, { required: field.required })}
+                  className={baseInputClass(!!errors[field.name])}
+                />
+              )}
+
+              {/* Email */}
+              {field.type === "email" && (
+                <input
+                  type='email'
+                  {...register(field.name, {
+                    required: field.required,
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "Invalid email address",
+                    },
+                  })}
+                  className={baseInputClass(!!errors[field.name])}
+                  placeholder={field.placeholder || "email@example.com"}
+                />
+              )}
+
+              {/* Password */}
+              {field.type === "password" && (
+                <input
+                  type='password'
+                  {...register(field.name, { required: field.required })}
+                  className={baseInputClass(!!errors[field.name])}
+                  placeholder='••••••••'
+                />
+              )}
+
+              {/* UID/Slug */}
+              {field.type === "uid" && (
+                <input
+                  type='text'
+                  {...register(field.name, { required: field.required })}
+                  className={clsx(baseInputClass(!!errors[field.name]), "font-mono text-sm")}
+                  placeholder='auto-generated-slug'
+                />
+              )}
+
+              {/* JSON */}
+              {field.type === "json" && (
+                <Controller
+                  name={field.name}
+                  control={control}
+                  rules={{ required: field.required }}
+                  render={({ field: f }) => (
+                    <textarea
+                      value={typeof f.value === "object" ? JSON.stringify(f.value, null, 2) : f.value || ""}
+                      onChange={(e) => {
+                        try { f.onChange(JSON.parse(e.target.value)); } 
+                        catch { f.onChange(e.target.value); }
+                      }}
+                      className={clsx(baseInputClass(!!errors[field.name]), "font-mono text-sm min-h-[150px]")}
+                      placeholder='{ "key": "value" }'
+                    />
+                  )}
+                />
+              )}
+
+              {/* Enumeration */}
+              {field.type === "enumeration" && (
+                <Controller
+                  name={field.name}
+                  control={control}
+                  rules={{ required: field.required }}
+                  render={({ field: f }) => (
+                    <Select onValueChange={f.onChange} value={f.value}>
+                      <SelectTrigger className={baseInputClass(!!errors[field.name])}>
+                        <SelectValue placeholder={`Select ${field.label}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {field.enumOptions?.map((opt: any) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              )}
+
+              {/* Media */}
               {field.type === "media" && (
                 <Controller
                   name={field.name}
@@ -197,6 +381,121 @@ export default function SingleTypePage({
                       multiple={false}
                     />
                   )}
+                />
+              )}
+
+              {/* Relation */}
+              {field.type === "relation" && (
+                <Controller
+                  name={field.name}
+                  control={control}
+                  rules={{ required: field.required }}
+                  render={({ field: f }) => {
+                    const items = relatedData[field.name] || [];
+                    const isMultiple = field.relation?.type === "hasMany" || field.relation?.type === "manyToMany";
+                    if (isMultiple) {
+                      const selectedIds = (f.value as string[]) || [];
+                      return (
+                        <div className='space-y-3'>
+                          <div className='flex flex-wrap gap-2'>
+                            {selectedIds.map((id) => {
+                              const item = items.find((i: any) => i.id === id);
+                              return (
+                                <Badge key={id} variant="secondary" className="pl-3 pr-1 py-1 gap-1">
+                                  {item?.label || id}
+                                  <button type='button' onClick={() => f.onChange(selectedIds.filter((i) => i !== id))} className='hover:bg-gray-200 rounded-full p-0.5 transition-colors'>
+                                    <X className='w-3 h-3' />
+                                  </button>
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                          <Combobox
+                            options={items.filter((i: any) => !selectedIds.includes(i.id)).map((item: any) => ({ value: item.id, label: item.label }))}
+                            onValueChange={(val) => { if (val && !selectedIds.includes(val)) f.onChange([...selectedIds, val]); }}
+                            placeholder={`Add ${field.label}...`}
+                            searchPlaceholder={`Search ${field.label.toLowerCase()}...`}
+                          />
+                        </div>
+                      );
+                    }
+                    return (
+                      <Combobox
+                        options={items.map((item: any) => ({ value: item.id, label: item.label }))}
+                        value={f.value}
+                        onValueChange={f.onChange}
+                        placeholder={`Select ${field.label}`}
+                        searchPlaceholder={`Search ${field.label.toLowerCase()}...`}
+                      />
+                    );
+                  }}
+                />
+              )}
+
+              {/* Component */}
+              {field.type === "component" && field.component && (
+                <Controller
+                  name={field.name}
+                  control={control}
+                  render={({ field: f }) => {
+                    const compDef = components[field.component?.component || ""];
+                    if (!compDef) return <p className='text-gray-500 text-sm'>Component not found</p>;
+
+                    if (field.component?.repeatable) {
+                      const items = (f.value as Record<string, unknown>[]) || [];
+                      return (
+                        <div className='space-y-3'>
+                          {items.map((item, idx) => (
+                            <div key={idx} className='border border-gray-200 rounded-lg p-4 bg-gray-50'>
+                              <div className='flex items-center justify-between mb-3'>
+                                <div className='flex items-center gap-2 text-gray-400'>
+                                  <GripVertical className='w-4 h-4' />
+                                  <span className='text-sm font-medium text-gray-700'>{compDef.displayName} #{idx + 1}</span>
+                                </div>
+                                <button type='button' onClick={() => f.onChange(items.filter((_, i) => i !== idx))} className='p-1 text-gray-400 hover:text-red-500'><Trash2 className='w-4 h-4' /></button>
+                              </div>
+                              <div className='space-y-4'>
+                                {compDef.fields?.map((cf: Field) => (
+                                  <div key={cf.name}>
+                                    <label className='block text-xs font-medium text-gray-600 mb-1'>{cf.label}</label>
+                                    <input
+                                      type='text'
+                                      value={(item[cf.name] as string) || ""}
+                                      onChange={(e) => {
+                                        const newItems = [...items];
+                                        newItems[idx] = { ...newItems[idx], [cf.name]: e.target.value };
+                                        f.onChange(newItems);
+                                      }}
+                                      className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
+                                      placeholder={cf.placeholder}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                          <button type='button' onClick={() => f.onChange([...items, {}])} className='flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium'><Plus className='w-4 h-4' />Add {compDef.displayName}</button>
+                        </div>
+                      );
+                    }
+                    const value = (f.value as Record<string, unknown>) || {};
+                    return (
+                      <div className='border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-4'>
+                        {compDef.fields?.map((cf: Field) => (
+                          <div key={cf.name}>
+                            <label className='block text-xs font-medium text-gray-600 mb-1'>{cf.label}</label>
+                            <input
+                              type='text'
+                              value={(value[cf.name] as string) || ""}
+                              onChange={(e) => f.onChange({ ...value, [cf.name]: e.target.value })}
+                              className='w-full px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-900'
+                              placeholder={cf.placeholder}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }}
                 />
               )}
 
