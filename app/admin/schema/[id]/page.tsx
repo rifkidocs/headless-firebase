@@ -317,6 +317,16 @@ export default function SchemaEditorPage({
   };
 
   const handleSaveField = (fieldData: Field) => {
+    // Check for duplicate Field Key (API ID)
+    const isDuplicate = watch("fields").some(
+      (f, idx) => f.name === fieldData.name && idx !== editingFieldIndex
+    );
+
+    if (isDuplicate) {
+      toast.error(`Field key "${fieldData.name}" already exists. Please use a unique key.`);
+      return;
+    }
+
     if (editingFieldIndex !== null) {
       update(editingFieldIndex, fieldData);
     } else {

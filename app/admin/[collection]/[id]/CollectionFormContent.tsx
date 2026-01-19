@@ -12,6 +12,7 @@ import {
   collection,
   serverTimestamp,
   query,
+  where,
   orderBy,
   onSnapshot,
   getDocs,
@@ -166,7 +167,7 @@ export default function CollectionFormContent({
   const onSubmit = async (data: Record<string, unknown>) => {
     setSaving(true);
     try {
-      // Handle UID fields
+      // 1. Handle UID fields first so they can be checked for uniqueness
       for (const field of collectionConfig.fields || []) {
         if (field.type === "uid" && field.targetField) {
           const sourceValue = data[field.targetField] as string;
@@ -179,16 +180,44 @@ export default function CollectionFormContent({
         }
       }
 
+      // 2. Remove undefined values
+      const sanitizedData = JSON.parse(JSON.stringify(data));
+
+      // 3. Check for Unique constraints
+      for (const field of collectionConfig.fields || []) {
+        if (field.unique) {
+          const value = sanitizedData[field.name];
+          if (value !== undefined && value !== null && value !== "") {
+            const q = query(
+              collection(db, collectionSlug),
+              where(field.name, "==", value)
+            );
+            const snapshot = await getDocs(q);
+            const isDuplicate = snapshot.docs.some((doc) =>
+              isNew ? true : doc.id !== id
+            );
+
+            if (isDuplicate) {
+              toast.error(
+                `The value for "${field.label}" must be unique. This value is already in use.`
+              );
+              setSaving(false);
+              return;
+            }
+          }
+        }
+      }
+
       if (isNew) {
         await addDoc(collection(db, collectionSlug), {
-          ...data,
+          ...sanitizedData,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
         toast.success("Entry created successfully!");
       } else {
         await updateDoc(doc(db, collectionSlug, id), {
-          ...data,
+          ...sanitizedData,
           updatedAt: serverTimestamp(),
         });
         toast.success("Entry updated successfully!");
