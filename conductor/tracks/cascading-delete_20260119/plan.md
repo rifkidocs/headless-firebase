@@ -21,13 +21,13 @@
 - [x] Task: Conductor - User Manual Verification 'Backend Foundation & API' (Protocol in workflow.md)
 
 ## Phase 2: Frontend UI & Integration
-- [ ] Task: Create Strict Confirmation Dialog
-    - [ ] Create `__tests__/components/ui/StrictConfirmDialog.test.tsx`.
+- [x] Task: Create Strict Confirmation Dialog ef118ca
+    - [x] Create `__tests__/components/ui/StrictConfirmDialog.test.tsx`.
         - Test: specific input validation (must match name).
         - Test: Delete button disabled until match.
-    - [ ] Implement `components/ui/StrictConfirmDialog.tsx`.
+    - [x] Implement `components/ui/StrictConfirmDialog.tsx`.
         - Props: `isOpen`, `onClose`, `onConfirm`, `title`, `collectionName`.
-- [ ] Task: Integrate Deletion Logic in Schema List
+- [~] Task: Integrate Deletion Logic in Schema List
     - [ ] Modify `app/admin/schema/page.tsx`.
         - Replace `ConfirmDialog` with `StrictConfirmDialog`.
         - Update `handleDelete` to call `DELETE /api/schema/[slug]`.
