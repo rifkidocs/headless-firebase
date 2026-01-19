@@ -1,6 +1,6 @@
 # Implementation Plan - Cascading Delete
 
-## Phase 1: Backend Foundation & API
+## Phase 1: Backend Foundation & API [checkpoint: 040e90f]
 - [x] Task: Initialize Firebase Admin SDK 0d3ff3d
     - [x] Create `lib/firebase-admin.ts` to export initialized admin app.
     - [x] Ensure environment variables for Service Account are properly handled/documented.
@@ -18,7 +18,7 @@
         - Execute `cloudinary.api.delete_resources` (or similar from `lib/cloudinary`).
         - Execute Firestore Batch Delete for content documents.
         - Delete the Schema definition document.
-- [ ] Task: Conductor - User Manual Verification 'Backend Foundation & API' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Backend Foundation & API' (Protocol in workflow.md)
 
 ## Phase 2: Frontend UI & Integration
 - [ ] Task: Create Strict Confirmation Dialog
